@@ -1,0 +1,60 @@
+env:
+  node: true
+  es6: true
+  commonjs: false
+  jest: true
+extends:
+  - airbnb-base
+  - prettier
+  - plugin:@typescript-eslint/recommended
+  - plugin:sonarjs/recommended
+  - plugin:security/recommended
+parser: '@typescript-eslint/parser'
+parserOptions:
+  ecmaVersion: latest
+  sourceType: module
+plugins:
+  - '@typescript-eslint'
+  - prettier
+  - eslint-plugin-import-helpers
+  - sonarjs
+  - security
+settings:
+  import/resolver:
+    node:
+      extensions: [".js", ".jsx", ".ts", ".tsx"]
+globals:
+  Atomics: readonly
+  SharedArrayBuffer: readonly
+rules:
+  prettier/prettier:
+    - error
+    - singleQuote: true
+      trailingComma: es5
+      semi: true
+      tabWidth: 4
+      printWidth: 120
+  import-helpers/order-imports:
+    - warn
+    - newlinesBetween: 'always'
+      groups:
+        - 'module'
+        - '/^@pulumi/'
+        - '/^@soufantech/'
+        - ['parent', 'sibling', 'index']
+      alphabetize:
+        order: 'asc'
+        ignoreCase: true
+  import/extensions:
+    - error
+    - ignorePackages
+    - js: never
+      jsx: never
+      ts: never
+      tsx: never
+overrides:
+  - files:
+      - src/**/*.test.ts
+    rules:
+      sonarjs/no-duplicate-string: off
+
