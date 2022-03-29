@@ -1,41 +1,23 @@
 root = true
 
 [*]
-charset=utf-8
-end_of_line=lf
-trim_trailing_whitespace=true
-insert_final_newline=true
-indent_style=space
-indent_size=4
+charset = utf-8
+end_of_line = lf
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+max_line_length = 100
 
-[{*.ng,*.sht,*.html,*.shtm,*.shtml,*.htm,*.hbs,*.gql,*.graphql}]
-indent_style=space
+[*.md]
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+[{*.ng,*.sht,*.html,*.shtm,*.shtml,*.htm,*.hbs}]
 indent_size=2
 
-[{.babelrc,.stylelintrc,jest.config,.eslintrc,.prettierrc,*.json,*.jsb3,*.jsb2,*.bowerrc,*.graphqlconfig}]
-indent_style=space
-indent_size=2
+[{*.js,*.cjs,*.ts,*.jsx,*.tsx,*.es6,*.mjs}]
+indent_size = 4
 
-[{.sequelizerc,*.js,*.cjs}]
-indent_style=space
-indent_size=2
-
-[{*.es6,*.mjs}]
-indent_style=space
-indent_size=2
-
-[{jshint.json,*.jshintrc}]
-indent_style=space
-indent_size=2
-
-[{*.jscs.json,*.jscsrc}]
-indent_style=space
-indent_size=2
-
-[*.js.map]
-indent_style=space
-indent_size=2
-
-[{.analysis_options,*.yml,*.yaml}]
-indent_style=space
-indent_size=2
+[{package.json,tsconfig*.json}]
+indent_size = 4
