@@ -1,6 +1,6 @@
 {
-  "name": "@soufantech/pulumi-contrib",
-  "version": "0.1.0",
+  "name": "@soufantech/pulumi-components",
+  "version": "0.2.0",
   "description": "Library to grouping different abstracted components for common flows",
   "keywords": [
     "iac",
