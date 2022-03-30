@@ -1,0 +1,31 @@
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:us-east-1:{{{accountId}}}:ExampleTopic",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
+        "TopicArn": "arn:aws:sns:us-east-1:123456789012:ExampleTopic",
+        "Subject": "ALARM: \"NewMaterialConverterQueue MessagesQueue High\" in US East (Ohio)",
+        "Message": "{\"AlarmName\":\"NewMaterialConverterQueue MessagesQueue High\",\"AlarmDescription\":null,\"AWSAccountId\":\"306315756373\",\"AlarmConfigurationUpdatedTimestamp\":\"2020-12-21T13:33:58.617+0000\",\"NewStateValue\":\"ALARM\",\"NewStateReason\":\"Threshold Crossed: 4 out of the last 4 datapoints [1924.4 (07/03/22 14:30:00), 2016.2 (07/03/22 14:25:00), 2109.0 (07/03/22 14:20:00), 521.0 (07/03/22 14:15:00)] were greater than the threshold (200.0) (minimum 4 datapoints for OK -> ALARM transition).\",\"StateChangeTime\":\"2022-03-07T14:35:01.631+0000\",\"Region\":\"US East (Ohio)\",\"AlarmArn\":\"arn:aws:cloudwatch:us-east-2:306315756373:alarm:NewMaterialConverterQueue MessagesQueue High\",\"OldStateValue\":\"OK\",\"Trigger\":{\"MetricName\":\"Messages\",\"Namespace\":\"RabbitMQ\",\"StatisticType\":\"Statistic\",\"Statistic\":\"AVERAGE\",\"Unit\":null,\"Dimensions\":[{\"value\":\"/\",\"name\":\"VHost\"},{\"value\":\"rabbitmq-cluster\",\"name\":\"Cluster\"},{\"value\":\"Queue\",\"name\":\"Metric\"},{\"value\":\"NewMaterialConverterQueue\",\"name\":\"Queue\"}],\"Period\":300,\"EvaluationPeriods\":4,\"DatapointsToAlarm\":4,\"ComparisonOperator\":\"GreaterThanThreshold\",\"Threshold\":200.0,\"TreatMissingData\":\"\",\"EvaluateLowSampleCountPercentile\":\"\"}}",
+        "Timestamp": "1970-01-01T00:00:00.000Z",
+        "SignatureVersion": "1",
+        "Signature": "EXAMPLE",
+        "SigningCertUrl": "EXAMPLE",
+        "UnsubscribeUrl": "EXAMPLE",
+        "MessageAttributes": {
+          "Test": {
+            "Type": "String",
+            "Value": "TestString"
+          },
+          "TestBinary": {
+            "Type": "Binary",
+            "Value": "TestBinary"
+          }
+        }
+      }
+    }
+  ]
+}

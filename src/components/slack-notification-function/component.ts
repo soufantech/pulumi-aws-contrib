@@ -1,7 +1,7 @@
+import path from 'path';
+
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-
-import makeHandler from './handler';
 
 export interface SlackNotificationFunctionArgs {
     region: string;
@@ -227,19 +227,30 @@ export default class SlackNotificationFunction extends pulumi.ComponentResource 
         slackWebhookCiphertext: aws.kms.Ciphertext,
         kmsAlias: aws.kms.Alias,
         tags?: Record<string, string>
-    ): aws.lambda.CallbackFunction<aws.sns.TopicEvent, unknown> {
-        return new aws.lambda.CallbackFunction<aws.sns.TopicEvent, unknown>(
+    ): aws.lambda.Function {
+        // const directory = path.join(__dirname, '/function');
+        // const handler = 'src/index.handler';
+        const directory = path.join(__dirname, '/function/dist');
+        const handler = 'index.handler';
+
+        const assetArchive = new pulumi.asset.AssetArchive({
+            '.': new pulumi.asset.FileArchive(directory),
+        });
+
+        return new aws.lambda.Function(
             name,
             {
                 runtime: 'nodejs14.x',
                 timeout: 60,
-                role,
-                callback: makeHandler(region),
+                role: role.arn,
+                code: assetArchive,
+                handler,
                 environment: {
                     variables: {
                         SLACK_CHANNEL: '#squad-mexican-rangers-alarms',
                         SLACK_WEBHOOK: slackWebhookCiphertext.ciphertextBlob,
                         KMS_KEY_ID: kmsAlias.arn,
+                        KMS_REGION: region,
                     },
                 },
                 tags,
