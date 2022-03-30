@@ -8,6 +8,7 @@ export interface SlackNotificationFunctionArgs {
     accountId: string;
     slackWebhook: pulumi.Input<string>;
     kmsDeletionWindow?: number;
+    logGroupRetentionDays?: number;
     tags?: Record<string, string>;
 }
 
@@ -31,6 +32,7 @@ export default class SlackNotificationFunction extends pulumi.ComponentResource 
 
         const { region, accountId, slackWebhook, tags } = args;
         const kmsDeletionWindow = args.kmsDeletionWindow || 7;
+        const logGroupRetentionDays = args.logGroupRetentionDays || 14;
 
         const role = this.createRole(name, region, accountId, tags);
 
@@ -53,7 +55,7 @@ export default class SlackNotificationFunction extends pulumi.ComponentResource 
             tags
         );
 
-        const logGroup = this.createLogGroup(name, lambdaFunction, tags);
+        const logGroup = this.createLogGroup(name, lambdaFunction, logGroupRetentionDays, tags);
 
         const snsTopic = this.createSnsTopic(name, tags);
 
@@ -262,13 +264,14 @@ export default class SlackNotificationFunction extends pulumi.ComponentResource 
     private createLogGroup(
         name: string,
         lambdaFunction: aws.lambda.CallbackFunction<aws.sns.TopicEvent, unknown>,
+        logGroupRetentionDays: number,
         tags?: Record<string, string>
     ): aws.cloudwatch.LogGroup {
         return new aws.cloudwatch.LogGroup(
             `/aws/lambda/${name}`,
             {
                 name: pulumi.interpolate`/aws/lambda/${lambdaFunction.name}`,
-                retentionInDays: 14,
+                retentionInDays: logGroupRetentionDays,
                 tags,
             },
             { parent: this }
