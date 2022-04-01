@@ -17,7 +17,17 @@
 
 </div>
 
-*Pending...*
+How to use
+----------
+
+See component README
+
+How to contribute
+-----------------
+
+See component README
+
+*yarn publish --access public*
 
 ---
 

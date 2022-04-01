@@ -1,10 +1,26 @@
-## Why not use aws.lambda.CallbackFunction
+How to use
+----------
 
-![Failure to serialize native built-in function](./docs/aws-lambda-callbackfunction.png)
+```javascript
+import { SlackNotificationFunction } from '@soufantech/pulumi-contrib';
 
-Reference: https://github.com/pulumi/pulumi/issues/5294
+// ...
 
-## How change lambda function
+const webhook = config.requireSecret('webhook');
+const notificationFunction = new SlackNotificationFunction('slack-notifications', {
+  region,
+  accountId,
+  slackWebhook: webhook,
+});
+
+export const lambdaFunctionArn = notificationFunction.lambdaFunction.arn;
+export const snsTopicArn = notificationFunction.snsTopic.arn;
+```
+
+How to contribute
+-----------------
+
+### How change lambda function
 
 ```shell
 cd function
@@ -20,11 +36,11 @@ git commit -m "message here"
 - Reference: https://maxsmolens.org/posts/bundling-an-aws-lambda-function-using-webpack/
 - Alternative using lambda layer: https://aws.amazon.com/pt/premiumsupport/knowledge-center/lambda-layer-aws-sdk-latest-version/
 
-## Tests
+### How to test
 
 How to test projects using this component.
 
-### Lambda tests
+#### Lambda tests
 
 Run command bellow (change JSON file):
 
@@ -40,7 +56,7 @@ aws lambda invoke \
 
 *More JSON test files in `./lamda-tests` directory.*
 
-### SNS tests
+#### SNS tests
 
 Run command bellow (change JSON file):
 
@@ -51,3 +67,12 @@ aws sns publish \
 ```
 
 *More JSON test files in `./sns-tests` directory.*
+
+Problems
+--------
+
+### Why not use aws.lambda.CallbackFunction
+
+![Failure to serialize native built-in function](docs/aws-lambda-callbackfunction.png)
+
+Reference: https://github.com/pulumi/pulumi/issues/5294

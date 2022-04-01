@@ -71,6 +71,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.58.0",
-    "@pulumi/aws": "^5.1.0"
+    "@pulumi/aws": "^5.1.0",
+    "@pulumi/awsx": "^0.40.0",
+    "@pulumi/pulumi": "^3.0.0"
   }
 }
