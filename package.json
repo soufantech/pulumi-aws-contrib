@@ -1,6 +1,6 @@
 {
-  "name": "@soufantech/pulumi-contrib",
-  "version": "0.3.0",
+  "name": "@soufantech/pulumi-aws-contrib",
+  "version": "0.4.0",
   "description": "Library to grouping different abstracted components for common flows",
   "keywords": [
     "iac",
@@ -14,11 +14,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/soufantech/pulumi-contrib.git"
+    "url": "https://github.com/soufantech/pulumi-aws-contrib.git"
   },
-  "homepage": "https://github.com/soufantech/pulumi-contrib#readme",
+  "homepage": "https://github.com/soufantech/pulumi-aws-contrib#readme",
   "bugs": {
-    "url": "https://github.com/soufantech/pulumi-contrib/issues"
+    "url": "https://github.com/soufantech/pulumi-aws-contrib/issues"
   },
   "license": "MIT",
   "publishConfig": {
