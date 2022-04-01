@@ -3,7 +3,11 @@ import * as aws from '@pulumi/aws';
 import * as awsx from '@pulumi/awsx';
 import * as pulumi from '@pulumi/pulumi';
 
-export type EcsServiceAlarmConfigKey = 'clusterName' | 'serviceName' | 'loadBalancer' | 'targetGroup';
+export type EcsServiceAlarmConfigKey =
+    | 'clusterName'
+    | 'serviceName'
+    | 'loadBalancer'
+    | 'targetGroup';
 
 export type EcsServiceAlarmConfig = {
     [config in EcsServiceAlarmConfigKey]?: string;

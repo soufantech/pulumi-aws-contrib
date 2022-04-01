@@ -221,7 +221,9 @@ export default class EcsAggregationDashboard extends pulumi.ComponentResource {
         ];
     }
 
-    static createUptimeAndHealthyStatusWidgets(services?: EcsAggregationDashboardServiceConfig[]): Widget[] {
+    static createUptimeAndHealthyStatusWidgets(
+        services?: EcsAggregationDashboardServiceConfig[]
+    ): Widget[] {
         if (!services) return [];
 
         const albConfigs = services
@@ -350,7 +352,9 @@ export default class EcsAggregationDashboard extends pulumi.ComponentResource {
         ];
     }
 
-    static createLatencyAndRequestCountWidgets(services?: EcsAggregationDashboardServiceConfig[]): Widget[] {
+    static createLatencyAndRequestCountWidgets(
+        services?: EcsAggregationDashboardServiceConfig[]
+    ): Widget[] {
         if (!services) return [];
 
         const albConfigs = services

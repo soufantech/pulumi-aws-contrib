@@ -6,7 +6,7 @@ export type {
     ecsClusterAlarm,
     ecsClusterDashboard,
     ecsServiceAlarm,
-    ecsServiceDashboard
+    ecsServiceDashboard,
 } from './observability';
 export type { observability } from './observability';
 export {
@@ -16,7 +16,4 @@ export {
     EcsServiceAlarm,
     EcsServiceDashboard,
 } from './observability';
-export {
-    createAlarmWidgets,
-    createSqsWidgets,
-} from './observability';
+export { createAlarmWidgets, createSqsWidgets } from './observability';

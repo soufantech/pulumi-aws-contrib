@@ -123,7 +123,8 @@ Problem fix
 ### Quick solution (@pulumi/awsx@0.40.0)
 
 ```shell
-cp ./problem/*.{js,ts} ./node_modules/@pulumi/awsx/cloudwatch
+# in project root directory run...
+cp ./problem-fix/*.{js,ts} ./node_modules/@pulumi/awsx/cloudwatch
 ```
 
 To ensure that the files work the version of the `@pulumi/awsx` package needs to be fixed.  That is, whenever updating this package, it is necessary to redo the manual process.

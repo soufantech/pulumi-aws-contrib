@@ -8,16 +8,15 @@ export type EcsClusterAlarmConfig = {
     [config in EcsClusterAlarmConfigKey]?: string;
 };
 
-export type EcsClusterAlarmOptionKey =
-    | 'asgGroupMaxSize';
+export type EcsClusterAlarmOptionKey = 'asgGroupMaxSize';
 
 export type EcsClusterAlarmOption = {
     [option in EcsClusterAlarmOptionKey]?: number;
-}
+};
 
 export type EcsClusterAlarmResult = {
     [option in EcsClusterAlarmOptionKey]?: aws.cloudwatch.MetricAlarm;
-}
+};
 
 export interface EcsClusterAlarmArgs {
     configs: EcsClusterAlarmConfig;
