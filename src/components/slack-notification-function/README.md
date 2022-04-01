@@ -2,7 +2,7 @@ How to use
 ----------
 
 ```javascript
-import { SlackNotificationFunction } from '@soufantech/pulumi-contrib';
+import { SlackNotificationFunction } from '@soufantech/pulumi-aws-contrib';
 
 // ...
 

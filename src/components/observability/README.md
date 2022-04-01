@@ -14,7 +14,7 @@ Features:
 #### Default option for simplified configuration
 
 ```javascript
-import { EcsServiceDashboard } from '@soufantech/pulumi-contrib';
+import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
 
 // ...
 
@@ -33,7 +33,7 @@ new EcsServiceDashboard(resourceName, {
 #### Possibility to choose the order of widgets
 
 ```javascript
-import { EcsServiceDashboard } from '@soufantech/pulumi-contrib';
+import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
 
 // ...
 
@@ -59,7 +59,7 @@ new EcsServiceDashboard(resourceName, {
 #### Possibility to specify extra widgets
 
 ```javascript
-import { EcsServiceDashboard } from '@soufantech/pulumi-contrib';
+import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
 
 // ...
 
