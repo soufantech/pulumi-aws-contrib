@@ -3,21 +3,7 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch/widget';
 import * as pulumi from '@pulumi/pulumi';
 
-import { ExtraWidgets } from './types';
-
-interface ServiceConfig {
-    clusterName: string;
-    serviceName: string;
-}
-
-interface AlbConfig {
-    loadBalancer: string;
-    targetGroup: string;
-}
-
-interface AsgConfig {
-    asgName: string;
-}
+import { ServiceConfig, AlbConfig, AsgConfig, ExtraWidgets } from './types';
 
 export interface EcsAggregationDashboardServiceConfig {
     serviceConfig: ServiceConfig;
