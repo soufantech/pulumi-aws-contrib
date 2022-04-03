@@ -3,7 +3,7 @@ How to use
 
 **See "Problem fix" section before proceeding.**
 
-### Dashboards
+### Dashboard components
 
 Features:
 
@@ -13,7 +13,7 @@ Features:
 
 #### Default option for simplified configuration
 
-```javascript
+```typescript
 import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
 
 // ...
@@ -32,7 +32,7 @@ new EcsServiceDashboard(resourceName, {
 
 #### Possibility to choose the order of widgets
 
-```javascript
+```typescript
 import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
 
 // ...
@@ -58,7 +58,7 @@ new EcsServiceDashboard(resourceName, {
 
 #### Possibility to specify extra widgets
 
-```javascript
+```typescript
 import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
 
 // ...
@@ -85,36 +85,64 @@ new EcsServiceDashboard(resourceName, {
 });
 ```
 
-### Alarms
+### Alarm components
 
 Features:
 
 - Possibility to choose which alarms to activate
 - Possibility to specify on which SNS topics to trigger the alarm
 
-```javascript
-    const alarms = new EcsServiceAlarm(resourceName, {
-        configs: {
-            clusterName,
-            serviceName,
-            loadBalancer,
-            targetGroup,
-        },
-        options: {
-            uptime: 95,
-            targetResponseTime: 0.5,
-            requestCount: 100000,
-            requestSpikeCount: 200000,
-            memoryUtilization: 40,
-            cpuUtilization: 5,
-            networkTxBytes: 20 * 1024 * 1024 * 1024,
-            networkRxBytes: 25 * 1024 * 1024 * 1024,
-            storageWriteBytes: 2 * 1024 * 1024,
-            storageReadBytes: 400 * 1024 * 1024,
-        },
-        snsTopicArns,
-    });
-    const alarmsArns = Object.values(alarms.alarms || []).map((alarm) => alarm.arn);
+```typescript
+const alarms = new EcsServiceAlarm(resourceName, {
+    configs: {
+        clusterName,
+        serviceName,
+        loadBalancer,
+        targetGroup,
+    },
+    options: {
+        uptime: 95,
+        targetResponseTime: 0.5,
+        requestCount: 100000,
+        requestSpikeCount: 200000,
+        memoryUtilization: 40,
+        cpuUtilization: 5,
+        networkTxBytes: 20 * 1024 * 1024 * 1024,
+        networkRxBytes: 25 * 1024 * 1024 * 1024,
+        storageWriteBytes: 2 * 1024 * 1024,
+        storageReadBytes: 400 * 1024 * 1024,
+    },
+    snsTopicArns,
+});
+const alarmsArns = Object.values(alarms.alarms || []).map((alarm) => alarm.arn);
+```
+
+### Alarm factories
+
+For individualized settings on each alarm use factories.
+
+```typescript
+import { asgAlarm, ecsClusterAlarm } from '@soufantech/pulumi-aws-contrib';
+
+const component = new pulumi.ComponentResource(
+    'contrib:components:AlarmAggregator',
+    resourceName
+);
+
+const alarmArns = [
+    asgAlarm.createAsgMaxGroupSizeAlarm(
+        resourceName,
+        80,
+        { asgName },
+        { parent: component, snsTopicArns },
+    ),
+    ecsClusterAlarm.createCpuUtilizationAlarm(
+        resourceName,
+        60,
+        { clusterName },
+        { parent: component, snsTopicArns },
+    ),
+].map((alarm) => alarm.arn);
 ```
 
 Problem fix

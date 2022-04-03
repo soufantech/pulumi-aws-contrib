@@ -1,8 +1,8 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-import * as constants from '../constants';
-import { AsgConfig, AlarmExtraConfigs } from '../types';
+import * as constants from '../../constants';
+import { AsgConfig, AlarmExtraConfigs } from '../../types';
 
 export default function createAlarm(
     name: string,

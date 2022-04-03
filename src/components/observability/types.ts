@@ -1,16 +1,20 @@
 import { Widget } from '@pulumi/awsx/cloudwatch/widget';
 import pulumi from '@pulumi/pulumi';
 
-export interface ClusterConfig {
+export interface EcsClusterConfig {
     clusterName: string;
 }
 
-export interface ServiceConfig {
+export interface EcsServiceConfig {
     clusterName: string;
     serviceName: string;
 }
 
 export interface AlbConfig {
+    loadBalancer: string;
+}
+
+export interface TargetGroupConfig {
     loadBalancer: string;
     targetGroup: string;
 }

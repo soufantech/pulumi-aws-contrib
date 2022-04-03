@@ -2,13 +2,13 @@ import * as aws from '@pulumi/aws';
 import * as awsx from '@pulumi/awsx';
 import * as pulumi from '@pulumi/pulumi';
 
-import * as constants from '../constants';
-import { ClusterConfig, AlarmExtraConfigs } from '../types';
+import * as constants from '../../constants';
+import { EcsClusterConfig, AlarmExtraConfigs } from '../../types';
 
 export default function createAlarm(
     name: string,
     threshold: number,
-    configs: ClusterConfig,
+    configs: EcsClusterConfig,
     extraConfigs: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
     const { clusterName } = configs;
@@ -18,17 +18,17 @@ export default function createAlarm(
         options.parent = extraConfigs.parent;
     }
 
-    const storageReadBytesMetric = new awsx.cloudwatch.Metric({
+    const networkRxBytesMetric = new awsx.cloudwatch.Metric({
         namespace: 'ECS/ContainerInsights',
-        name: 'StorageReadBytes',
-        label: 'StorageReadBytes',
+        name: 'NetworkRxBytes',
+        label: 'NetworkRxBytes',
         dimensions: { ClusterName: clusterName },
         statistic: 'Average',
         period: constants.LONG_PERIOD,
     });
 
-    return storageReadBytesMetric.createAlarm(
-        `${name}-storage-read-bytes`,
+    return networkRxBytesMetric.createAlarm(
+        `${name}-network-rx-bytes`,
         {
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,

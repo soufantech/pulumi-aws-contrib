@@ -3,11 +3,11 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch/widget';
 import * as pulumi from '@pulumi/pulumi';
 
-import { ServiceConfig, AlbConfig, AsgConfig, ExtraWidgets } from './types';
+import { EcsServiceConfig, TargetGroupConfig, AsgConfig, ExtraWidgets } from './types';
 
 export interface EcsAggregationDashboardServiceConfig {
-    serviceConfig: ServiceConfig;
-    albConfig?: AlbConfig;
+    serviceConfig: EcsServiceConfig;
+    targetGroupConfig?: TargetGroupConfig;
 }
 
 export interface EcsAggregationDashboardInstanceConfig {
@@ -213,8 +213,8 @@ export default class EcsAggregationDashboard extends pulumi.ComponentResource {
         if (!services) return [];
 
         const albConfigs = services
-            .map((service) => service.albConfig)
-            .filter((albConfig) => albConfig) as AlbConfig[];
+            .map((service) => service.targetGroupConfig)
+            .filter((targetGroupConfig) => targetGroupConfig) as TargetGroupConfig[];
 
         if (!albConfigs.length) {
             return [];
@@ -344,8 +344,8 @@ export default class EcsAggregationDashboard extends pulumi.ComponentResource {
         if (!services) return [];
 
         const albConfigs = services
-            .map((service) => service.albConfig)
-            .filter((albConfig) => albConfig) as AlbConfig[];
+            .map((service) => service.targetGroupConfig)
+            .filter((targetGroupConfig) => targetGroupConfig) as TargetGroupConfig[];
 
         if (!albConfigs.length) {
             return [];
