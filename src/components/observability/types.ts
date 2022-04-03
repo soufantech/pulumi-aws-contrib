@@ -1,3 +1,4 @@
+import aws from '@pulumi/aws';
 import { Widget } from '@pulumi/awsx/cloudwatch/widget';
 import pulumi from '@pulumi/pulumi';
 
@@ -32,3 +33,17 @@ export interface AlarmExtraConfigs {
     parent?: pulumi.Resource;
     snsTopicArns?: string[];
 }
+
+export type AlarmFactory = (
+    name: string,
+    threshold: number,
+    configs: Record<string, string>,
+    extraConfigs: AlarmExtraConfigs
+) => aws.cloudwatch.MetricAlarm;
+
+export type WrapperAlarmFactory = (
+    name: string,
+    threshold: number,
+    config: Record<string, string>,
+    snsTopicArns?: string[]
+) => aws.cloudwatch.MetricAlarm | undefined;

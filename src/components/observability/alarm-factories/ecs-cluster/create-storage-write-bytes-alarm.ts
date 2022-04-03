@@ -33,8 +33,8 @@ export default function createAlarm(
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,
             evaluationPeriods: constants.DATAPOINTS,
-            okActions: extraConfigs.snsTopicArns,
             alarmActions: extraConfigs.snsTopicArns,
+            okActions: extraConfigs.snsTopicArns,
         },
         options
     );

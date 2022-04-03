@@ -1,7 +1,9 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import * as aws from '@pulumi/aws';
-import * as awsx from '@pulumi/awsx';
 import * as pulumi from '@pulumi/pulumi';
+
+import { ecsServiceAlarm, tgAlarm } from './alarm-factories';
+import { TargetGroupConfig, EcsServiceConfig, WrapperAlarmFactory } from './types';
 
 export type EcsServiceAlarmConfigKey =
     | 'clusterName'
@@ -18,12 +20,12 @@ export type EcsServiceAlarmOptionKey =
     | 'targetResponseTime'
     | 'requestCount'
     | 'requestSpikeCount'
-    | 'memoryUtilization'
     | 'cpuUtilization'
-    | 'networkTxBytes'
+    | 'memoryUtilization'
     | 'networkRxBytes'
-    | 'storageWriteBytes'
-    | 'storageReadBytes';
+    | 'networkTxBytes'
+    | 'storageReadBytes'
+    | 'storageWriteBytes';
 
 export type EcsServiceAlarmOption = {
     [option in EcsServiceAlarmOptionKey]?: number;
@@ -39,20 +41,11 @@ export interface EcsServiceAlarmArgs {
     snsTopicArns?: string[];
 }
 
-export type EcsServiceAlarmActionValue = (
-    name: string,
-    threshold: number,
-    config: EcsServiceAlarmConfig,
-    snsTopicArns?: string[]
-) => aws.cloudwatch.MetricAlarm | undefined;
+export type EcsServiceAlarmActionValue = WrapperAlarmFactory;
 
 export type EcsServiceAlarmActionDict = {
     [option in EcsServiceAlarmOptionKey]: EcsServiceAlarmActionValue;
 };
-
-const shortPeriod = 60;
-const longPeriod = 300;
-const datapoints = 6;
 
 export default class EcsServiceAlarm extends pulumi.ComponentResource {
     readonly alarms?: EcsServiceAlarmResult;
@@ -62,12 +55,12 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         targetResponseTime: this.createTargetResponseTimeAlarm,
         requestCount: this.createRequestCountAlarm,
         requestSpikeCount: this.createRequestSpikeCountAlarm,
-        memoryUtilization: this.createMemoryUtilizationAlarm,
         cpuUtilization: this.createCpuUtilizationAlarm,
-        networkTxBytes: this.createNetworkTxBytesAlarm,
+        memoryUtilization: this.createMemoryUtilizationAlarm,
         networkRxBytes: this.createNetworkRxBytesAlarm,
-        storageWriteBytes: this.createStorageWriteBytesAlarm,
+        networkTxBytes: this.createNetworkTxBytesAlarm,
         storageReadBytes: this.createStorageReadBytesAlarm,
+        storageWriteBytes: this.createStorageWriteBytesAlarm,
     };
 
     constructor(name: string, args: EcsServiceAlarmArgs, opts?: pulumi.ResourceOptions) {
@@ -103,329 +96,200 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
     private createUptimeAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { loadBalancer, targetGroup } = configs;
         if (!loadBalancer || !targetGroup) return undefined;
 
-        return new aws.cloudwatch.MetricAlarm(
-            `${name}-uptime`,
-            {
-                comparisonOperator: 'LessThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                metricQueries: [
-                    {
-                        id: 'e1',
-                        expression: '(1-(m2/m1))*100',
-                        label: 'Uptime',
-                        returnData: true,
-                    },
-                    {
-                        id: 'm1',
-                        metric: {
-                            namespace: 'AWS/ApplicationELB',
-                            metricName: 'RequestCount',
-                            dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-                            stat: 'Sum',
-                            period: shortPeriod,
-                        },
-                    },
-                    {
-                        id: 'm2',
-                        metric: {
-                            namespace: 'AWS/ApplicationELB',
-                            metricName: 'HTTPCode_ELB_5XX_Count',
-                            dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-                            stat: 'Sum',
-                            period: shortPeriod,
-                        },
-                    },
-                ],
-                alarmActions: snsTopicArns,
-                okActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        const tgConfig: TargetGroupConfig = {
+            loadBalancer,
+            targetGroup,
+        };
+
+        return tgAlarm.createUptimeAlarm(name, threshold, tgConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 
     private createTargetResponseTimeAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { loadBalancer, targetGroup } = configs;
         if (!loadBalancer || !targetGroup) return undefined;
 
-        const targetResponseTimeMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ApplicationELB',
-            name: 'TargetResponseTime',
-            label: 'TargetResponseTime',
-            dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-            statistic: 'Average',
-            period: shortPeriod,
-        });
+        const tgConfig: TargetGroupConfig = {
+            loadBalancer,
+            targetGroup,
+        };
 
-        return targetResponseTimeMetric.createAlarm(
-            `${name}-target-response-time`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                okActions: snsTopicArns,
-                alarmActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        return tgAlarm.createTargetResponseTimeAlarm(name, threshold, tgConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 
     private createRequestCountAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { loadBalancer, targetGroup } = configs;
         if (!loadBalancer || !targetGroup) return undefined;
 
-        const requestCountMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ApplicationELB',
-            name: 'RequestCount',
-            label: 'RequestCount',
-            dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-            statistic: 'Sum',
-            period: longPeriod,
-        });
+        const tgConfig: TargetGroupConfig = {
+            loadBalancer,
+            targetGroup,
+        };
 
-        return requestCountMetric.createAlarm(
-            `${name}-request-count`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                alarmActions: snsTopicArns,
-                okActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        return tgAlarm.createRequestCountAlarm(name, threshold, tgConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 
     private createRequestSpikeCountAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { loadBalancer, targetGroup } = configs;
         if (!loadBalancer || !targetGroup) return undefined;
 
-        const requestCountMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ApplicationELB',
-            name: 'RequestCount',
-            label: 'RequestCount',
-            dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-            statistic: 'Sum',
-            period: longPeriod,
+        const tgConfig: TargetGroupConfig = {
+            loadBalancer,
+            targetGroup,
+        };
+
+        return tgAlarm.createRequestSpikeCountAlarm(name, threshold, tgConfig, {
+            parent: this,
+            snsTopicArns,
         });
-
-        return requestCountMetric.createAlarm(
-            `${name}-request-spike-count`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: 1,
-                alarmActions: snsTopicArns,
-                okActions: snsTopicArns,
-            },
-            { parent: this }
-        );
-    }
-
-    private createMemoryUtilizationAlarm(
-        name: string,
-        threshold: number,
-        configs: EcsServiceAlarmConfig,
-        snsTopicArns?: string[]
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { clusterName, serviceName } = configs;
-        if (!clusterName || !serviceName) return undefined;
-
-        const memoryUtilization = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ECS',
-            name: 'MemoryUtilization',
-            label: 'MemoryUtilization',
-            dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-            statistic: 'Average',
-            period: longPeriod,
-        });
-
-        return memoryUtilization.createAlarm(
-            `${name}-memory-utilization`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                okActions: snsTopicArns,
-                alarmActions: snsTopicArns,
-            },
-            { parent: this }
-        );
     }
 
     private createCpuUtilizationAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const cpuUtilization = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ECS',
-            name: 'CPUUtilization',
-            label: 'CPUUtilization',
-            dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-            statistic: 'Average',
-            period: longPeriod,
-        });
+        const clusterConfig: EcsServiceConfig = {
+            clusterName,
+            serviceName,
+        };
 
-        return cpuUtilization.createAlarm(
-            `${name}-cpu-utilization`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                alarmActions: snsTopicArns,
-                okActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        return ecsServiceAlarm.createCpuUtilizationAlarm(name, threshold, clusterConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 
-    private createNetworkTxBytesAlarm(
+    private createMemoryUtilizationAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const networkTxBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'NetworkTxBytes',
-            label: 'NetworkTxBytes',
-            dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-            statistic: 'Average',
-            period: longPeriod,
-        });
+        const clusterConfig: EcsServiceConfig = {
+            clusterName,
+            serviceName,
+        };
 
-        return networkTxBytesMetric.createAlarm(
-            `${name}-network-tx-bytes`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                alarmActions: snsTopicArns,
-                okActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        return ecsServiceAlarm.createMemoryUtilizationAlarm(name, threshold, clusterConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 
     private createNetworkRxBytesAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const networkRxBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'NetworkRxBytes',
-            label: 'NetworkRxBytes',
-            dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-            statistic: 'Average',
-            period: longPeriod,
-        });
+        const clusterConfig: EcsServiceConfig = {
+            clusterName,
+            serviceName,
+        };
 
-        return networkRxBytesMetric.createAlarm(
-            `${name}-network-rx-bytes`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                alarmActions: snsTopicArns,
-                okActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        return ecsServiceAlarm.createNetworkRxBytesAlarm(name, threshold, clusterConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 
-    private createStorageWriteBytesAlarm(
+    private createNetworkTxBytesAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const storageWriteBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'StorageWriteBytes',
-            label: 'StorageWriteBytes',
-            dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-            statistic: 'Average',
-            period: longPeriod,
-        });
+        const clusterConfig: EcsServiceConfig = {
+            clusterName,
+            serviceName,
+        };
 
-        return storageWriteBytesMetric.createAlarm(
-            `${name}-storage-write-bytes`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                okActions: snsTopicArns,
-                alarmActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        return ecsServiceAlarm.createNetworkTxBytesAlarm(name, threshold, clusterConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 
     private createStorageReadBytesAlarm(
         name: string,
         threshold: number,
-        configs: EcsServiceAlarmConfig,
+        configs: Record<string, string>,
         snsTopicArns?: string[]
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const storageReadBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'StorageReadBytes',
-            label: 'StorageReadBytes',
-            dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-            statistic: 'Average',
-            period: longPeriod,
-        });
+        const clusterConfig: EcsServiceConfig = {
+            clusterName,
+            serviceName,
+        };
 
-        return storageReadBytesMetric.createAlarm(
-            `${name}-storage-read-bytes`,
-            {
-                comparisonOperator: 'GreaterThanOrEqualToThreshold',
-                threshold,
-                evaluationPeriods: datapoints,
-                alarmActions: snsTopicArns,
-                okActions: snsTopicArns,
-            },
-            { parent: this }
-        );
+        return ecsServiceAlarm.createStorageReadBytesAlarm(name, threshold, clusterConfig, {
+            parent: this,
+            snsTopicArns,
+        });
+    }
+
+    private createStorageWriteBytesAlarm(
+        name: string,
+        threshold: number,
+        configs: Record<string, string>,
+        snsTopicArns?: string[]
+    ): aws.cloudwatch.MetricAlarm | undefined {
+        const { clusterName, serviceName } = configs;
+        if (!clusterName || !serviceName) return undefined;
+
+        const clusterConfig: EcsServiceConfig = {
+            clusterName,
+            serviceName,
+        };
+
+        return ecsServiceAlarm.createStorageWriteBytesAlarm(name, threshold, clusterConfig, {
+            parent: this,
+            snsTopicArns,
+        });
     }
 }

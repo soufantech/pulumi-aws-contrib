@@ -2,15 +2,15 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../constants';
-import { AsgConfig, AlarmExtraConfigs } from '../../types';
+import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
 
 export default function createAlarm(
     name: string,
     threshold: number,
-    configs: AsgConfig,
+    configs: TargetGroupConfig,
     extraConfigs: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
-    const { asgName } = configs;
+    const { loadBalancer, targetGroup } = configs;
 
     const options: pulumi.ResourceOptions = {};
     if (extraConfigs.parent) {
@@ -18,36 +18,36 @@ export default function createAlarm(
     }
 
     return new aws.cloudwatch.MetricAlarm(
-        `${name}-asg-max-size`,
+        `${name}-uptime`,
         {
-            comparisonOperator: 'GreaterThanOrEqualToThreshold',
+            comparisonOperator: 'LessThanOrEqualToThreshold',
             threshold,
             evaluationPeriods: constants.DATAPOINTS,
             metricQueries: [
                 {
                     id: 'e1',
-                    expression: '(m1*100)/m2',
-                    label: 'AsgMaxSize',
+                    expression: '(1-(m2/m1))*100',
+                    label: 'Uptime',
                     returnData: true,
                 },
                 {
                     id: 'm1',
                     metric: {
-                        namespace: 'AWS/AutoScaling',
-                        metricName: 'GroupInServiceInstances',
-                        dimensions: { AutoScalingGroupName: asgName },
-                        stat: 'Maximum',
-                        period: constants.LONG_PERIOD,
+                        namespace: 'AWS/ApplicationELB',
+                        metricName: 'RequestCount',
+                        dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
+                        stat: 'Sum',
+                        period: constants.SHORT_PERIOD,
                     },
                 },
                 {
                     id: 'm2',
                     metric: {
-                        namespace: 'AWS/AutoScaling',
-                        metricName: 'GroupMaxSize',
-                        dimensions: { AutoScalingGroupName: asgName },
-                        stat: 'Maximum',
-                        period: constants.LONG_PERIOD,
+                        namespace: 'AWS/ApplicationELB',
+                        metricName: 'HTTPCode_ELB_5XX_Count',
+                        dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
+                        stat: 'Sum',
+                        period: constants.SHORT_PERIOD,
                     },
                 },
             ],

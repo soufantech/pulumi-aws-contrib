@@ -93,6 +93,10 @@ Features:
 - Possibility to specify on which SNS topics to trigger the alarm
 
 ```typescript
+import { EcsServiceAlarm } from '@soufantech/pulumi-aws-contrib';
+
+// ...
+
 const alarms = new EcsServiceAlarm(resourceName, {
     configs: {
         clusterName,
@@ -123,6 +127,8 @@ For individualized settings on each alarm use factories.
 
 ```typescript
 import { asgAlarm, ecsClusterAlarm } from '@soufantech/pulumi-aws-contrib';
+
+// ...
 
 const component = new pulumi.ComponentResource(
     'contrib:components:AlarmAggregator',
@@ -286,24 +292,60 @@ How to contribute
 
 ### In alarm components
 
-#### Create new alarms
+#### Create new alarm factory
+
+The alarms are separated by categories according to the parameters received in the `configs` attribute. See below the interface of an alarm factory.
+
+```typescript
+type AlarmFactory = (
+    name: string,
+    threshold: number,
+    configs: Record<string, string>,
+    extraConfigs: AlarmExtraConfigs
+) => aws.cloudwatch.MetricAlarm;
+```
+
+- Identify the alarm category
+- Create a factory with the signature of `AlarmFactory`
+- Use `export default function createAlarm();`
+- `configs` can be a more specific type
+  - e.g. `AlbConfig`, `TargetGroupConfig`, `EcsClusterConfig`, etc
+- Create and populate `options` object
+- Create `MetricAlarm` with `aws` module
+  - or create `Metric` and then use `createAlarm` with `awsx` module
+- Add to category index
+
+#### Create new alarm factory category
+
+- Create directory for new alarm category (categories are based on required `configs`)
+- Create index file inside directory
+- Add as module in index file hierarchically above
+
+#### Add alarm factory in abstracted component
+
+Factories are encapsulated by private methods responsible for translating the most simplified configurations to specific configurations. See below the interface of a private method.
+
+```typescript
+type WrapperAlarmFactory = (
+    name: string,
+    threshold: number,
+    config: Record<string, string>,
+    snsTopicArns?: string[]
+) => aws.cloudwatch.MetricAlarm | undefined;
+```
+
+- Create private method calling factory
+  - Use guard clause to check the configs
+  - Create config object according to used factory
+  - Call factory passing the arguments
+- Add new option in type `...AlarmOptionKey`
+- Add new method to `actionDict`
+
+#### Create new configs in abstracted component
 
 Steps:
 
-- Implement private static method **(only used internally)**
-  - This method takes `name`, `threshold`, `configs`, `snsTopicArns`
-  - `configs` is an object with all configurations
-  - All configs are passed as optional, so the method must use a guard clause
-  - Configs are optional to simplify class parameterization
-- Add method to `actionDict`
-- Add option to `AlarmOptionKey`
-  - All options must receive a number as threshold
-
-#### Create new configs
-
-Steps:
-
-- Add config in `AlarmConfigKey`
+- Add config in `...AlarmConfigKey`
 
 ### In dashboard components
 

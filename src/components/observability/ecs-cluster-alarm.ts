@@ -3,7 +3,7 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 import { asgAlarm, ecsClusterAlarm } from './alarm-factories';
-import { AsgConfig, EcsClusterConfig } from './types';
+import { AsgConfig, EcsClusterConfig, WrapperAlarmFactory } from './types';
 
 export type EcsClusterAlarmConfigKey = 'clusterName' | 'asgName';
 
@@ -34,12 +34,7 @@ export interface EcsClusterAlarmArgs {
     snsTopicArns?: string[];
 }
 
-export type EcsClusterAlarmActionValue = (
-    name: string,
-    threshold: number,
-    configs: Record<string, string>,
-    snsTopicArns?: string[]
-) => aws.cloudwatch.MetricAlarm | undefined;
+export type EcsClusterAlarmActionValue = WrapperAlarmFactory;
 
 export type EcsClusterAlarmActionDict = {
     [option in EcsClusterAlarmOptionKey]: EcsClusterAlarmActionValue;

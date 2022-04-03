@@ -3,32 +3,32 @@ import * as awsx from '@pulumi/awsx';
 import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../constants';
-import { EcsClusterConfig, AlarmExtraConfigs } from '../../types';
+import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
 
 export default function createAlarm(
     name: string,
     threshold: number,
-    configs: EcsClusterConfig,
+    configs: TargetGroupConfig,
     extraConfigs: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
-    const { clusterName } = configs;
+    const { loadBalancer, targetGroup } = configs;
 
     const options: pulumi.ResourceOptions = {};
     if (extraConfigs.parent) {
         options.parent = extraConfigs.parent;
     }
 
-    const memoryUtilization = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ECS',
-        name: 'MemoryUtilization',
-        label: 'MemoryUtilization',
-        dimensions: { ClusterName: clusterName },
+    const targetResponseTimeMetric = new awsx.cloudwatch.Metric({
+        namespace: 'AWS/ApplicationELB',
+        name: 'TargetResponseTime',
+        label: 'TargetResponseTime',
+        dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
         statistic: 'Average',
-        period: constants.LONG_PERIOD,
+        period: constants.SHORT_PERIOD,
     });
 
-    return memoryUtilization.createAlarm(
-        `${name}-memory-utilization`,
+    return targetResponseTimeMetric.createAlarm(
+        `${name}-target-response-time`,
         {
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,
