@@ -1,9 +1,15 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import * as awsx from '@pulumi/awsx';
-import { Widget } from '@pulumi/awsx/cloudwatch/widget';
+import { Widget } from '@pulumi/awsx/cloudwatch';
 import * as pulumi from '@pulumi/pulumi';
 
-import { ExtraWidgets } from './types';
+import {
+    ExtraWidgets,
+    AsgConfig,
+    EcsClusterConfig,
+    EcsClusterWithAsgConfig,
+    WrapperWidgetFactory,
+} from './types';
+import { asgWidgets, ecsClusterWidgets } from './widget-factories';
 
 export type EcsClusterDashboardConfigKey = 'clusterName' | 'asgName';
 
@@ -25,43 +31,21 @@ export interface EcsClusterDashboardArgs {
     extraWidgets?: ExtraWidgets;
 }
 
-export interface EcsClusterDashboardActionValue {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    run: (...args: any[]) => Widget[];
-    args: EcsClusterDashboardConfigKey[];
-}
+export type EcsClusterDashboardActionValue = WrapperWidgetFactory;
 
 export type EcsClusterDashboardActionDict = {
     [option in EcsClusterDashboardOptionKey]: EcsClusterDashboardActionValue;
 };
 
-const fixedPeriod = 60;
-const dinamicPeriod = 60;
-
 export default class EcsClusterDashboard extends pulumi.ComponentResource {
     readonly dashboard: awsx.cloudwatch.Dashboard;
 
     static readonly actionDict: EcsClusterDashboardActionDict = {
-        task: {
-            run: EcsClusterDashboard.createTaskCountWidgets,
-            args: ['clusterName', 'asgName'],
-        },
-        hardware: {
-            run: EcsClusterDashboard.createMemoryAndCpuUtizilationWidgets,
-            args: ['clusterName'],
-        },
-        inputOutputRate: {
-            run: EcsClusterDashboard.createNetworkAndStorageRateWidgets,
-            args: ['clusterName'],
-        },
-        inputOutputBytes: {
-            run: EcsClusterDashboard.createNetworkAndStorageIoBytesWidgets,
-            args: ['asgName'],
-        },
-        inputOutputCount: {
-            run: EcsClusterDashboard.createNetworkAndStorageIoCountWidgets,
-            args: ['asgName'],
-        },
+        task: EcsClusterDashboard.createTaskCountWidgets,
+        hardware: EcsClusterDashboard.createMemoryAndCpuUtizilationWidgets,
+        inputOutputRate: EcsClusterDashboard.createNetworkAndStorageRateWidgets,
+        inputOutputBytes: EcsClusterDashboard.createNetworkAndStorageIoBytesWidgets,
+        inputOutputCount: EcsClusterDashboard.createNetworkAndStorageIoCountWidgets,
     };
 
     constructor(name: string, args: EcsClusterDashboardArgs, opts?: pulumi.ResourceOptions) {
@@ -89,13 +73,7 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
         /* eslint-disable security/detect-object-injection */
         widgets.push(
             ...computedOptions
-                .map((option) =>
-                    EcsClusterDashboard.actionDict[option].run(
-                        ...EcsClusterDashboard.actionDict[option].args.map(
-                            (argName) => configs[argName]
-                        )
-                    )
-                )
+                .map((option) => EcsClusterDashboard.actionDict[option](configs))
                 .flat()
         );
         /* eslint-enable security/detect-object-injection */
@@ -105,355 +83,59 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
         this.dashboard = new awsx.cloudwatch.Dashboard(name, { widgets }, { parent: this });
     }
 
-    static createTaskCountWidgets(clusterName?: string, asgName?: string): Widget[] {
-        if (asgName) {
-            return EcsClusterDashboard.createInstanceAndTaskCountWidgets(clusterName, asgName);
-        }
-
-        return EcsClusterDashboard.createOnlyTaskCountWidgets(clusterName);
-    }
-
-    static createInstanceAndTaskCountWidgets(clusterName?: string, asgName?: string): Widget[] {
-        if (!clusterName || !asgName) return [];
-
-        const asgInServiceInstancesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/AutoScaling',
-            name: 'GroupInServiceInstances',
-            label: 'GroupInServiceInstances',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Maximum',
-        });
-
-        const asgDesiredCapacityMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/AutoScaling',
-            name: 'GroupInServiceInstances',
-            label: 'GroupInServiceInstances',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Maximum',
-        });
-
-        const asgMaxSizeMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/AutoScaling',
-            name: 'GroupMaxSize',
-            label: 'GroupMaxSize',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Maximum',
-        });
-
-        const serviceCountMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'ServiceCount',
-            label: 'ServiceCount',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Maximum',
-        });
-
-        const taskCountMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'TaskCount',
-            label: 'TaskCount',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Maximum',
-        });
-
-        return [
-            new awsx.cloudwatch.SingleNumberMetricWidget({
-                title: 'Instance Count Status',
-                width: 3,
-                height: 6,
-                metrics: [
-                    asgInServiceInstancesMetric.withPeriod(fixedPeriod),
-                    asgMaxSizeMetric.withPeriod(fixedPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: `Instance Count History (${asgName})`,
-                width: 9,
-                height: 6,
-                metrics: [
-                    asgDesiredCapacityMetric.withPeriod(dinamicPeriod),
-                    asgInServiceInstancesMetric.withPeriod(dinamicPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.SingleNumberMetricWidget({
-                title: 'Task Count Status',
-                width: 3,
-                height: 6,
-                metrics: [
-                    serviceCountMetric.withPeriod(fixedPeriod),
-                    taskCountMetric.withPeriod(fixedPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: `Task Count History (${clusterName})`,
-                width: 9,
-                height: 6,
-                metrics: [taskCountMetric.withPeriod(dinamicPeriod)],
-            }),
-        ];
-    }
-
-    static createOnlyTaskCountWidgets(clusterName?: string): Widget[] {
+    static createTaskCountWidgets(configs: Record<string, string>): Widget[] {
+        const { clusterName, asgName } = configs;
         if (!clusterName) return [];
 
-        const serviceCountMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'ServiceCount',
-            label: 'ServiceCount',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Maximum',
-        });
+        const ecsClusterWithAsgConfig: EcsClusterWithAsgConfig = {
+            clusterName,
+            asgName,
+        };
 
-        const taskCountMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'TaskCount',
-            label: 'TaskCount',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Maximum',
-        });
-
-        return [
-            new awsx.cloudwatch.SingleNumberMetricWidget({
-                title: 'Task Count Status',
-                width: 6,
-                height: 4,
-                metrics: [
-                    serviceCountMetric.withPeriod(fixedPeriod),
-                    taskCountMetric.withPeriod(fixedPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: `Task Count History (${clusterName})`,
-                width: 18,
-                height: 4,
-                metrics: [taskCountMetric.withPeriod(dinamicPeriod)],
-            }),
-        ];
+        return ecsClusterWidgets.createTaskCountWidgets(ecsClusterWithAsgConfig);
     }
 
-    static createMemoryAndCpuUtizilationWidgets(clusterName?: string): Widget[] {
+    static createMemoryAndCpuUtizilationWidgets(configs: Record<string, string>): Widget[] {
+        const { clusterName } = configs;
         if (!clusterName) return [];
 
-        const memoryUtilizationMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ECS',
-            name: 'MemoryUtilization',
-            label: 'MemoryUtilization',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Average',
-        });
+        const ecsClusterConfig: EcsClusterConfig = {
+            clusterName,
+        };
 
-        const memoryAnomalyDetectionExpression = new awsx.cloudwatch.ExpressionWidgetMetric(
-            'ANOMALY_DETECTION_BAND(m1, 2)',
-            'AnomalyDetectionBand',
-            'e1'
-        );
-
-        const cpuUtilizationMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ECS',
-            name: 'CPUUtilization',
-            label: 'CPUUtilization',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Average',
-        });
-
-        const cpuAnomalyDetectionExpression = new awsx.cloudwatch.ExpressionWidgetMetric(
-            'ANOMALY_DETECTION_BAND(m1, 2)',
-            'AnomalyDetectionBand',
-            'e1'
-        );
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Memory Utilization',
-                width: 12,
-                height: 6,
-                period: dinamicPeriod,
-                metrics: [
-                    memoryAnomalyDetectionExpression,
-                    memoryUtilizationMetric.withId('m1').withPeriod(dinamicPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'CPU Utilization',
-                width: 12,
-                height: 6,
-                period: dinamicPeriod,
-                metrics: [
-                    cpuAnomalyDetectionExpression,
-                    cpuUtilizationMetric.withId('m1').withPeriod(dinamicPeriod),
-                ],
-            }),
-        ];
+        return ecsClusterWidgets.createMemoryAndCpuWidgets(ecsClusterConfig);
     }
 
-    static createNetworkAndStorageRateWidgets(clusterName?: string): Widget[] {
+    static createNetworkAndStorageRateWidgets(configs: Record<string, string>): Widget[] {
+        const { clusterName } = configs;
         if (!clusterName) return [];
 
-        const networkTxBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'NetworkTxBytes',
-            label: 'NetworkTxBytes',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Average',
-        });
+        const ecsClusterConfig: EcsClusterConfig = {
+            clusterName,
+        };
 
-        const networkRxBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'NetworkRxBytes',
-            label: 'NetworkRxBytes',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Average',
-        });
-
-        const storageWriteBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'StorageWriteBytes',
-            label: 'StorageWriteBytes',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Average',
-        });
-
-        const storageReadBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'ECS/ContainerInsights',
-            name: 'StorageReadBytes',
-            label: 'StorageReadBytes',
-            dimensions: { ClusterName: clusterName },
-            statistic: 'Average',
-        });
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Network Rate',
-                width: 12,
-                height: 6,
-                metrics: [
-                    networkTxBytesMetric.withPeriod(dinamicPeriod),
-                    networkRxBytesMetric.withPeriod(dinamicPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Storage Rate',
-                width: 12,
-                height: 6,
-                metrics: [
-                    storageWriteBytesMetric.withPeriod(dinamicPeriod),
-                    storageReadBytesMetric.withPeriod(dinamicPeriod),
-                ],
-            }),
-        ];
+        return ecsClusterWidgets.createNetworkAndStorageRateWidgets(ecsClusterConfig);
     }
 
-    static createNetworkAndStorageIoBytesWidgets(asgName?: string): Widget[] {
+    static createNetworkAndStorageIoBytesWidgets(configs: Record<string, string>): Widget[] {
+        const { asgName } = configs;
         if (!asgName) return [];
 
-        const networkOutMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'NetworkOut',
-            label: 'NetworkOut',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
+        const asgConfig: AsgConfig = {
+            asgName,
+        };
 
-        const networkInMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'NetworkIn',
-            label: 'NetworkIn',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
-
-        const ebsWriteBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'EBSWriteBytes',
-            label: 'EBSWriteBytes',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
-
-        const ebsReadBytesMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'EBSReadBytes',
-            label: 'EBSReadBytes',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Network IO (bytes)',
-                width: 12,
-                height: 6,
-                metrics: [
-                    networkOutMetric.withPeriod(dinamicPeriod),
-                    networkInMetric.withPeriod(dinamicPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Storage IO (bytes)',
-                width: 12,
-                height: 6,
-                metrics: [
-                    ebsWriteBytesMetric.withPeriod(dinamicPeriod),
-                    ebsReadBytesMetric.withPeriod(dinamicPeriod),
-                ],
-            }),
-        ];
+        return asgWidgets.createNetworkAndStorageIoBytesWidgets(asgConfig);
     }
 
-    static createNetworkAndStorageIoCountWidgets(asgName?: string): Widget[] {
+    static createNetworkAndStorageIoCountWidgets(configs: Record<string, string>): Widget[] {
+        const { asgName } = configs;
         if (!asgName) return [];
 
-        const networkPacketsOutMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'NetworkPacketsOut',
-            label: 'NetworkPacketsOut',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
+        const asgConfig: AsgConfig = {
+            asgName,
+        };
 
-        const networkPacketsInMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'NetworkPacketsIn',
-            label: 'NetworkPacketsIn',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
-
-        const ebsWriteOpsMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'EBSWriteOps',
-            label: 'EBSWriteOps',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
-
-        const ebsReadOpsMetric = new awsx.cloudwatch.Metric({
-            namespace: 'AWS/EC2',
-            name: 'EBSReadOps',
-            label: 'EBSReadOps',
-            dimensions: { AutoScalingGroupName: asgName },
-            statistic: 'Average',
-        });
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Network IO (count)',
-                width: 12,
-                height: 6,
-                metrics: [
-                    networkPacketsOutMetric.withPeriod(dinamicPeriod),
-                    networkPacketsInMetric.withPeriod(dinamicPeriod),
-                ],
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Storage IO (count)',
-                width: 12,
-                height: 6,
-                metrics: [
-                    ebsWriteOpsMetric.withPeriod(dinamicPeriod),
-                    ebsReadOpsMetric.withPeriod(dinamicPeriod),
-                ],
-            }),
-        ];
+        return asgWidgets.createNetworkAndStorageIoCountWidgets(asgConfig);
     }
 }

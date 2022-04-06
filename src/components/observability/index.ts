@@ -1,19 +1,26 @@
-export * as ecsAggregationDashboard from './ecs-aggregation-dashboard';
+import type * as ecsAggregationDashboardTypes from './ecs-aggregation-dashboard';
+import type * as ecsClusterAlarmTypes from './ecs-cluster-alarm';
+import type * as ecsClusterDashboardTypes from './ecs-cluster-dashboard';
+import type * as ecsServiceAlarmTypes from './ecs-service-alarm';
+import type * as ecsServiceDashboardTypes from './ecs-service-dashboard';
+import type * as observabilityTypes from './types';
+
+export type {
+    ecsAggregationDashboardTypes,
+    ecsClusterAlarmTypes,
+    ecsClusterDashboardTypes,
+    ecsServiceAlarmTypes,
+    ecsServiceDashboardTypes,
+    observabilityTypes,
+};
+
 export { default as EcsAggregationDashboard } from './ecs-aggregation-dashboard';
-
-export * as ecsClusterAlarm from './ecs-cluster-alarm';
 export { default as EcsClusterAlarm } from './ecs-cluster-alarm';
-
-export * as ecsClusterDashboard from './ecs-cluster-dashboard';
 export { default as EcsClusterDashboard } from './ecs-cluster-dashboard';
-
-export * as ecsServiceAlarm from './ecs-service-alarm';
 export { default as EcsServiceAlarm } from './ecs-service-alarm';
-
-export * as ecsServiceDashboard from './ecs-service-dashboard';
 export { default as EcsServiceDashboard } from './ecs-service-dashboard';
 
-export { default as createAlarmWidgets } from './utils/create-alarm-widgets';
-export { default as createSqsWidgets } from './utils/create-sqs-widgets';
+export * from './alarm-factories';
+export * from './widget-factories';
 
-export * as observability from './types';
+export * as observabilityConstants from './constants';

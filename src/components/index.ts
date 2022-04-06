@@ -1,19 +1,12 @@
-export type { slackNotificationFunction } from './slack-notification-function';
-export { SlackNotificationFunction } from './slack-notification-function';
+export * from './slack-notification-function';
+export type { slackNotificationFunctionTypes } from './slack-notification-function';
 
+export * from './observability';
 export type {
-    ecsAggregationDashboard,
-    ecsClusterAlarm,
-    ecsClusterDashboard,
-    ecsServiceAlarm,
-    ecsServiceDashboard,
+    ecsAggregationDashboardTypes,
+    ecsClusterAlarmTypes,
+    ecsClusterDashboardTypes,
+    ecsServiceAlarmTypes,
+    ecsServiceDashboardTypes,
+    observabilityTypes,
 } from './observability';
-export type { observability } from './observability';
-export {
-    EcsAggregationDashboard,
-    EcsClusterAlarm,
-    EcsClusterDashboard,
-    EcsServiceAlarm,
-    EcsServiceDashboard,
-} from './observability';
-export { createAlarmWidgets, createSqsWidgets } from './observability';
