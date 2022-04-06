@@ -181,12 +181,12 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const clusterConfig: EcsServiceConfig = {
+        const ecsServiceConfig: EcsServiceConfig = {
             clusterName,
             serviceName,
         };
 
-        return ecsServiceAlarm.createCpuUtilizationAlarm(name, threshold, clusterConfig, {
+        return ecsServiceAlarm.createCpuUtilizationAlarm(name, threshold, ecsServiceConfig, {
             parent: this,
             snsTopicArns,
         });
@@ -201,12 +201,12 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const clusterConfig: EcsServiceConfig = {
+        const ecsServiceConfig: EcsServiceConfig = {
             clusterName,
             serviceName,
         };
 
-        return ecsServiceAlarm.createMemoryUtilizationAlarm(name, threshold, clusterConfig, {
+        return ecsServiceAlarm.createMemoryUtilizationAlarm(name, threshold, ecsServiceConfig, {
             parent: this,
             snsTopicArns,
         });
@@ -221,12 +221,12 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const clusterConfig: EcsServiceConfig = {
+        const ecsServiceConfig: EcsServiceConfig = {
             clusterName,
             serviceName,
         };
 
-        return ecsServiceAlarm.createNetworkRxBytesAlarm(name, threshold, clusterConfig, {
+        return ecsServiceAlarm.createNetworkRxBytesAlarm(name, threshold, ecsServiceConfig, {
             parent: this,
             snsTopicArns,
         });
@@ -241,12 +241,12 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const clusterConfig: EcsServiceConfig = {
+        const ecsServiceConfig: EcsServiceConfig = {
             clusterName,
             serviceName,
         };
 
-        return ecsServiceAlarm.createNetworkTxBytesAlarm(name, threshold, clusterConfig, {
+        return ecsServiceAlarm.createNetworkTxBytesAlarm(name, threshold, ecsServiceConfig, {
             parent: this,
             snsTopicArns,
         });
@@ -261,12 +261,12 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const clusterConfig: EcsServiceConfig = {
+        const ecsServiceConfig: EcsServiceConfig = {
             clusterName,
             serviceName,
         };
 
-        return ecsServiceAlarm.createStorageReadBytesAlarm(name, threshold, clusterConfig, {
+        return ecsServiceAlarm.createStorageReadBytesAlarm(name, threshold, ecsServiceConfig, {
             parent: this,
             snsTopicArns,
         });
@@ -281,12 +281,12 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         const { clusterName, serviceName } = configs;
         if (!clusterName || !serviceName) return undefined;
 
-        const clusterConfig: EcsServiceConfig = {
+        const ecsServiceConfig: EcsServiceConfig = {
             clusterName,
             serviceName,
         };
 
-        return ecsServiceAlarm.createStorageWriteBytesAlarm(name, threshold, clusterConfig, {
+        return ecsServiceAlarm.createStorageWriteBytesAlarm(name, threshold, ecsServiceConfig, {
             parent: this,
             snsTopicArns,
         });
