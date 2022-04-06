@@ -349,24 +349,46 @@ Steps:
 
 ### In dashboard components
 
-#### Create new dashboards
+#### Create new widget factory
+
+The widgets are separated by categories according to the parameters received in the `configs` attribute. See below the interface of a widget factory.
+
+```typescript
+type WidgetFactory = (configs: Record<string, string>) => Widget[];
+```
+
+- Identify the widget category
+- Create a factory with the signature of `WidgetFactory`
+- Use `export default function createWidgets();`
+- `configs` can be a more specific type
+  - e.g. `AlbConfig`, `TargetGroupConfig`, `EcsClusterConfig`, etc
+- Create `Metric` or `ExpressionWidgetMetric` and then use in widgets components (with `awsx`)
+- Add to category index
+
+#### Create new widget factory category
+
+- Create directory for new widget category (categories are based on required `configs`)
+- Create index file inside directory
+- Add as module in index file hierarchically above
+
+#### Add widget factory in abstracted component
+
+Factories are encapsulated by private methods responsible for translating the most simplified configurations to specific configurations. See below the interface of a private method.
+
+```typescript
+type WrapperWidgetFactory = (configs: Record<string, string>) => Widget[];
+```
+
+- Create private method calling factory
+  - Use guard clause to check the configs
+  - Create config object according to used factory
+  - Call factory passing the arguments
+- Add new option in type `...DashboardOptionKey`
+- Add new method to `actionDict`
+
+#### Create new configs in abstracted component
 
 Steps:
-- 
-- Implement private static method **(possible to be used outside the class)**
-  - This method receives exactly the configs that will be used (due to its use outside the class)
-  - All settings are passed as optional, so the method must use a guard clause
-  - Configs are optional to simplify class parameterization
-- Add method to `actionDict`
-  - Also specify which configs the method should receive
-- Add option to `DashboardOptionKey`
 
-#### Create new configs
-
-Steps (for most components):
-
-- Add config in `DashboardConfigKey`
-
-Steps (for EcsAggregationDashboard):
-
-- Add config in `DashboardConfig`
+- Add config in `...DashboardConfigKey`
+- *For EcsAggregationDashboard component use `...DashboardConfig`
