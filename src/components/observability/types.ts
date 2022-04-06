@@ -29,6 +29,12 @@ export interface EcsClusterWithAsgConfig {
     asgName?: string;
 }
 
+export interface EcsServiceWithAsgConfig {
+    clusterName: string;
+    serviceName: string;
+    asgName?: string;
+}
+
 export interface ExtraWidgets {
     begin?: Widget[];
     end?: Widget[];
