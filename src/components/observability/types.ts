@@ -1,5 +1,5 @@
 import aws from '@pulumi/aws';
-import { Widget } from '@pulumi/awsx/cloudwatch/widget';
+import { Widget } from '@pulumi/awsx/cloudwatch';
 import pulumi from '@pulumi/pulumi';
 
 export interface EcsClusterConfig {
@@ -24,6 +24,11 @@ export interface AsgConfig {
     asgName: string;
 }
 
+export interface EcsClusterWithAsgConfig {
+    clusterName: string;
+    asgName?: string;
+}
+
 export interface ExtraWidgets {
     begin?: Widget[];
     end?: Widget[];
@@ -44,6 +49,10 @@ export type AlarmFactory = (
 export type WrapperAlarmFactory = (
     name: string,
     threshold: number,
-    config: Record<string, string>,
+    configs: Record<string, string>,
     snsTopicArns?: string[]
 ) => aws.cloudwatch.MetricAlarm | undefined;
+
+export type WidgetFactory = (configs: Record<string, string>) => Widget[];
+
+export type WrapperWidgetFactory = (configs: Record<string, string>) => Widget[];

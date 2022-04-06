@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
