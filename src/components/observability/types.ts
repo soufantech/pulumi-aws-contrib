@@ -43,6 +43,9 @@ export interface ExtraWidgets {
 export interface AlarmExtraConfigs {
     parent?: pulumi.Resource;
     snsTopicArns?: string[];
+    datapointsToAlarm?: number;
+    evaluationPeriods?: number;
+    period?: number;
 }
 
 export type AlarmFactory = (

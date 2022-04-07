@@ -13,6 +13,12 @@ export default function createAlarm(
 ): aws.cloudwatch.MetricAlarm {
     const { clusterName, serviceName } = configs;
 
+    const period = extraConfigs.period || constants.LONG_PERIOD;
+
+    const evaluationPeriods = extraConfigs.evaluationPeriods || constants.DATAPOINTS;
+    const datapointsToAlarm =
+        extraConfigs.datapointsToAlarm || extraConfigs.evaluationPeriods || constants.DATAPOINTS;
+
     const options: pulumi.ResourceOptions = {};
     if (extraConfigs.parent) {
         options.parent = extraConfigs.parent;
@@ -24,7 +30,7 @@ export default function createAlarm(
         label: 'CPUUtilization',
         dimensions: { ClusterName: clusterName, ServiceName: serviceName },
         statistic: 'Average',
-        period: constants.LONG_PERIOD,
+        period,
     });
 
     return cpuUtilization.createAlarm(
@@ -32,7 +38,8 @@ export default function createAlarm(
         {
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,
-            evaluationPeriods: constants.DATAPOINTS,
+            evaluationPeriods,
+            datapointsToAlarm,
             alarmActions: extraConfigs.snsTopicArns,
             okActions: extraConfigs.snsTopicArns,
         },

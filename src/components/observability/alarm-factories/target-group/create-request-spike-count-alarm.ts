@@ -13,6 +13,14 @@ export default function createAlarm(
 ): aws.cloudwatch.MetricAlarm {
     const { loadBalancer, targetGroup } = configs;
 
+    const period = extraConfigs.period || constants.LONG_PERIOD;
+
+    const evaluationPeriods = extraConfigs.evaluationPeriods || constants.CRITICAL_DATAPOINTS;
+    const datapointsToAlarm =
+        extraConfigs.datapointsToAlarm ||
+        extraConfigs.evaluationPeriods ||
+        constants.CRITICAL_DATAPOINTS;
+
     const options: pulumi.ResourceOptions = {};
     if (extraConfigs.parent) {
         options.parent = extraConfigs.parent;
@@ -24,7 +32,7 @@ export default function createAlarm(
         label: 'RequestCount',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
         statistic: 'Sum',
-        period: constants.LONG_PERIOD,
+        period,
     });
 
     return requestCountMetric.createAlarm(
@@ -32,7 +40,8 @@ export default function createAlarm(
         {
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,
-            evaluationPeriods: 1,
+            evaluationPeriods,
+            datapointsToAlarm,
             alarmActions: extraConfigs.snsTopicArns,
             okActions: extraConfigs.snsTopicArns,
         },
