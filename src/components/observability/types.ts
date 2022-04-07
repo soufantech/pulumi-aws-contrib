@@ -53,6 +53,11 @@ export interface WidgetExtraConfigs {
     longPeriod?: number;
 }
 
+export interface WrapperWidgetExtraConfigs {
+    shortPeriod?: number;
+    longPeriod?: number;
+}
+
 export type AlarmFactory = (
     name: string,
     threshold: number,
@@ -67,6 +72,12 @@ export type WrapperAlarmFactory = (
     snsTopicArns?: string[]
 ) => aws.cloudwatch.MetricAlarm | undefined;
 
-export type WidgetFactory = (configs: Record<string, string>) => Widget[];
+export type WidgetFactory = (
+    configs: Record<string, string>,
+    extraConfigs?: WidgetExtraConfigs
+) => Widget[];
 
-export type WrapperWidgetFactory = (configs: Record<string, string>) => Widget[];
+export type WrapperWidgetFactory = (
+    configs: Record<string, string>,
+    extraConfigs?: WrapperWidgetExtraConfigs
+) => Widget[];
