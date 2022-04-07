@@ -62,7 +62,7 @@ export type AlarmFactory = (
     name: string,
     threshold: number,
     configs: Record<string, string>,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ) => aws.cloudwatch.MetricAlarm;
 
 export type WrapperAlarmFactory = (

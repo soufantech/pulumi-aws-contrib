@@ -8,19 +8,19 @@ export default function createAlarm(
     name: string,
     threshold: number,
     configs: AsgConfig,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
     const { asgName } = configs;
 
-    const period = extraConfigs.period || constants.LONG_PERIOD;
+    const period = extraConfigs?.period || constants.LONG_PERIOD;
 
-    const evaluationPeriods = extraConfigs.evaluationPeriods || constants.DATAPOINTS;
+    const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
     const datapointsToAlarm =
-        extraConfigs.datapointsToAlarm || extraConfigs.evaluationPeriods || constants.DATAPOINTS;
+        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
 
     const options: pulumi.ResourceOptions = {};
-    if (extraConfigs.parent) {
-        options.parent = extraConfigs.parent;
+    if (extraConfigs?.parent) {
+        options.parent = extraConfigs?.parent;
     }
 
     return new aws.cloudwatch.MetricAlarm(
@@ -58,8 +58,8 @@ export default function createAlarm(
                     },
                 },
             ],
-            alarmActions: extraConfigs.snsTopicArns,
-            okActions: extraConfigs.snsTopicArns,
+            alarmActions: extraConfigs?.snsTopicArns,
+            okActions: extraConfigs?.snsTopicArns,
         },
         options
     );

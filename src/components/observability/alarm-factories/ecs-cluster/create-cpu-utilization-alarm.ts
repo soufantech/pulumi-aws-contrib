@@ -9,19 +9,19 @@ export default function createAlarm(
     name: string,
     threshold: number,
     configs: EcsClusterConfig,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
     const { clusterName } = configs;
 
-    const period = extraConfigs.period || constants.LONG_PERIOD;
+    const period = extraConfigs?.period || constants.LONG_PERIOD;
 
-    const evaluationPeriods = extraConfigs.evaluationPeriods || constants.DATAPOINTS;
+    const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
     const datapointsToAlarm =
-        extraConfigs.datapointsToAlarm || extraConfigs.evaluationPeriods || constants.DATAPOINTS;
+        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
 
     const options: pulumi.ResourceOptions = {};
-    if (extraConfigs.parent) {
-        options.parent = extraConfigs.parent;
+    if (extraConfigs?.parent) {
+        options.parent = extraConfigs?.parent;
     }
 
     const cpuUtilization = new awsx.cloudwatch.Metric({
@@ -40,8 +40,8 @@ export default function createAlarm(
             threshold,
             evaluationPeriods,
             datapointsToAlarm,
-            alarmActions: extraConfigs.snsTopicArns,
-            okActions: extraConfigs.snsTopicArns,
+            alarmActions: extraConfigs?.snsTopicArns,
+            okActions: extraConfigs?.snsTopicArns,
         },
         options
     );
