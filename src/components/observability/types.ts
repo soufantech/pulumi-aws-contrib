@@ -48,6 +48,11 @@ export interface AlarmExtraConfigs {
     period?: number;
 }
 
+export interface WidgetExtraConfigs {
+    shortPeriod?: number;
+    longPeriod?: number;
+}
+
 export type AlarmFactory = (
     name: string,
     threshold: number,

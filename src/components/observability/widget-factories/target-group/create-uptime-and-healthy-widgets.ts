@@ -3,10 +3,16 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { TargetGroupConfig } from '../../types';
+import { TargetGroupConfig, WidgetExtraConfigs } from '../../types';
 
-export default function createWidgets(configs: TargetGroupConfig): Widget[] {
+export default function createWidgets(
+    configs: TargetGroupConfig,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
     const { loadBalancer, targetGroup } = configs;
+
+    const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
     const requestCountMetric = new awsx.cloudwatch.Metric({
         namespace: 'AWS/ApplicationELB',
@@ -57,16 +63,13 @@ export default function createWidgets(configs: TargetGroupConfig): Widget[] {
             title: 'Uptime Status',
             width: 3,
             height: 4,
-            period: constants.SHORT_PERIOD,
+            period: shortPeriod,
             metrics: [
                 uptimeExpression,
-                requestCountMetric
-                    .withId('m1')
-                    .withPeriod(constants.SHORT_PERIOD)
-                    .withVisible(false),
+                requestCountMetric.withId('m1').withPeriod(shortPeriod).withVisible(false),
                 httpCodeTarget5xxCountMetric
                     .withId('m2')
-                    .withPeriod(constants.SHORT_PERIOD)
+                    .withPeriod(shortPeriod)
                     .withVisible(false),
             ],
         }),
@@ -74,44 +77,32 @@ export default function createWidgets(configs: TargetGroupConfig): Widget[] {
             title: 'Uptime History',
             width: 9,
             height: 4,
-            period: constants.LONG_PERIOD,
+            period: longPeriod,
             metrics: [
                 uptimeExpression,
-                requestCountMetric
-                    .withId('m1')
-                    .withPeriod(constants.LONG_PERIOD)
-                    .withVisible(false),
-                httpCodeTarget5xxCountMetric
-                    .withId('m2')
-                    .withPeriod(constants.LONG_PERIOD)
-                    .withVisible(false),
+                requestCountMetric.withId('m1').withPeriod(longPeriod).withVisible(false),
+                httpCodeTarget5xxCountMetric.withId('m2').withPeriod(longPeriod).withVisible(false),
             ],
         }),
         new awsx.cloudwatch.SingleNumberMetricWidget({
             title: 'Healthy Status',
             width: 6,
             height: 4,
-            period: constants.SHORT_PERIOD,
+            period: shortPeriod,
             metrics: [
-                healthyHostCountMetric.withPeriod(constants.SHORT_PERIOD),
-                unhealthyHostCountMetric.withPeriod(constants.SHORT_PERIOD),
+                healthyHostCountMetric.withPeriod(shortPeriod),
+                unhealthyHostCountMetric.withPeriod(shortPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
             title: 'Healthy History',
             width: 6,
             height: 4,
-            period: constants.LONG_PERIOD,
+            period: longPeriod,
             metrics: [
                 healthyRateExpression,
-                healthyHostCountMetric
-                    .withId('m1')
-                    .withPeriod(constants.LONG_PERIOD)
-                    .withVisible(false),
-                unhealthyHostCountMetric
-                    .withId('m2')
-                    .withPeriod(constants.LONG_PERIOD)
-                    .withVisible(false),
+                healthyHostCountMetric.withId('m1').withPeriod(longPeriod).withVisible(false),
+                unhealthyHostCountMetric.withId('m2').withPeriod(longPeriod).withVisible(false),
             ],
         }),
     ];

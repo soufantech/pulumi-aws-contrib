@@ -2,10 +2,15 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { AsgConfig } from '../../types';
+import { AsgConfig, WidgetExtraConfigs } from '../../types';
 
-export default function createWidgets(configs: AsgConfig): Widget[] {
+export default function createWidgets(
+    configs: AsgConfig,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
     const { asgName } = configs;
+
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
     const networkPacketsOutMetric = new awsx.cloudwatch.Metric({
         namespace: 'AWS/EC2',
@@ -45,8 +50,8 @@ export default function createWidgets(configs: AsgConfig): Widget[] {
             width: 12,
             height: 6,
             metrics: [
-                networkPacketsOutMetric.withPeriod(constants.LONG_PERIOD),
-                networkPacketsInMetric.withPeriod(constants.LONG_PERIOD),
+                networkPacketsOutMetric.withPeriod(longPeriod),
+                networkPacketsInMetric.withPeriod(longPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
@@ -54,8 +59,8 @@ export default function createWidgets(configs: AsgConfig): Widget[] {
             width: 12,
             height: 6,
             metrics: [
-                ebsWriteOpsMetric.withPeriod(constants.LONG_PERIOD),
-                ebsReadOpsMetric.withPeriod(constants.LONG_PERIOD),
+                ebsWriteOpsMetric.withPeriod(longPeriod),
+                ebsReadOpsMetric.withPeriod(longPeriod),
             ],
         }),
     ];

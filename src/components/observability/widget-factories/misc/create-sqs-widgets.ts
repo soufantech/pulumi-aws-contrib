@@ -1,11 +1,17 @@
 import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch/widget';
 
-const fixedPeriod = 60;
-const dinamicPeriod = 60;
+import * as constants from '../../constants';
+import { WidgetExtraConfigs } from '../../types';
 
-export default function createSqsWidgets(queues: string[] = []): Widget[] {
-    return queues
+export default function createSqsWidgets(
+    queues?: string[],
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
+    const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+
+    return (queues || [])
         .map((queueName) => {
             const ageOfOldestMessage = new awsx.cloudwatch.Metric({
                 namespace: 'AWS/SQS',
@@ -80,8 +86,8 @@ export default function createSqsWidgets(queues: string[] = []): Widget[] {
                     width: 3,
                     height: 6,
                     metrics: [
-                        ageOfOldestMessage.withPeriod(fixedPeriod),
-                        numberOfMessagesVisibleMetric.withPeriod(fixedPeriod),
+                        ageOfOldestMessage.withPeriod(shortPeriod),
+                        numberOfMessagesVisibleMetric.withPeriod(shortPeriod),
                     ],
                 }),
                 new awsx.cloudwatch.SingleNumberMetricWidget({
@@ -91,13 +97,13 @@ export default function createSqsWidgets(queues: string[] = []): Widget[] {
                     metrics: [
                         numberOfMessagesSentMetric
                             .withId('m1')
-                            .withPeriod(dinamicPeriod)
+                            .withPeriod(longPeriod)
                             .withVisible(false),
                         numberOfMessagesReceivedMetric
                             .withId('m2')
-                            .withPeriod(dinamicPeriod)
+                            .withPeriod(longPeriod)
                             .withVisible(false),
-                        sentMessageSizeMetric.withId('m3').withPeriod(dinamicPeriod),
+                        sentMessageSizeMetric.withId('m3').withPeriod(longPeriod),
                         receivedToSentRatioExpression,
                     ],
                 }),
@@ -106,16 +112,16 @@ export default function createSqsWidgets(queues: string[] = []): Widget[] {
                     width: 9,
                     height: 6,
                     metrics: [
-                        numberOfMessagesSentMetric.withPeriod(dinamicPeriod),
-                        numberOfMessagesReceivedMetric.withPeriod(dinamicPeriod),
-                        numberOfMessagesDeletedMetric.withPeriod(dinamicPeriod),
+                        numberOfMessagesSentMetric.withPeriod(longPeriod),
+                        numberOfMessagesReceivedMetric.withPeriod(longPeriod),
+                        numberOfMessagesDeletedMetric.withPeriod(longPeriod),
                     ],
                 }),
                 new awsx.cloudwatch.LineGraphMetricWidget({
                     title: 'Empty Receives',
                     width: 9,
                     height: 6,
-                    metrics: [numberOfEmptyReceivesMetric.withPeriod(dinamicPeriod)],
+                    metrics: [numberOfEmptyReceivesMetric.withPeriod(longPeriod)],
                 }),
             ];
         })
