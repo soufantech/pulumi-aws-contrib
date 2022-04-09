@@ -7,7 +7,7 @@ interface AlarmConfig {
     extraAlarms?: pulumi.Input<string>[];
 }
 
-export default function createAlarmWidgets(alarmConfig?: AlarmConfig): Widget[] {
+export default function createWidgets(alarmConfig?: AlarmConfig): Widget[] {
     const mainAlarms = alarmConfig?.mainAlarms || [];
     const extraAlarms = alarmConfig?.extraAlarms || [];
 

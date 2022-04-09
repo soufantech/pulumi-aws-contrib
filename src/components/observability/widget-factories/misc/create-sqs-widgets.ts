@@ -4,7 +4,7 @@ import { Widget } from '@pulumi/awsx/cloudwatch/widget';
 import * as constants from '../../constants';
 import { WidgetExtraConfigs } from '../../types';
 
-export default function createSqsWidgets(
+export default function createWidgets(
     queues?: string[],
     extraConfigs?: WidgetExtraConfigs
 ): Widget[] {
