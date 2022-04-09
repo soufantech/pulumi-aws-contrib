@@ -6,7 +6,7 @@ import {
     TargetGroupConfig,
     EcsServiceConfig,
     WrapperAlarmFactory,
-    WrapperAlarmExtraConfigs
+    WrapperAlarmExtraConfigs,
 } from './types';
 
 export type EcsServiceAlarmConfigKey =

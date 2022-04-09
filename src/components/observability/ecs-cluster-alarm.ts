@@ -2,7 +2,12 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 import { asgAlarm, ecsClusterAlarm } from './alarm-factories';
-import {AsgConfig, EcsClusterConfig, WrapperAlarmExtraConfigs, WrapperAlarmFactory} from './types';
+import {
+    AsgConfig,
+    EcsClusterConfig,
+    WrapperAlarmExtraConfigs,
+    WrapperAlarmFactory,
+} from './types';
 
 export type EcsClusterAlarmConfigKey = 'clusterName' | 'asgName';
 
