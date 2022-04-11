@@ -1,5 +1,5 @@
 import * as awsx from '@pulumi/awsx';
-import { Widget } from '@pulumi/awsx/cloudwatch/widget';
+import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
 import { WidgetExtraConfigs } from '../../types';

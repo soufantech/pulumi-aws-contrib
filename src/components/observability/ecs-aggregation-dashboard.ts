@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import * as awsx from '@pulumi/awsx';
-import { Widget } from '@pulumi/awsx/cloudwatch/widget';
+import { Widget } from '@pulumi/awsx/cloudwatch';
 import * as pulumi from '@pulumi/pulumi';
 
 import {
