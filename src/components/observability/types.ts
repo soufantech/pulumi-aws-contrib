@@ -47,6 +47,7 @@ export interface AlarmExtraConfigs {
     snsTopicArns?: string[];
     datapointsToAlarm?: number;
     evaluationPeriods?: number;
+    treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
     period?: number;
 }
 
@@ -54,6 +55,7 @@ export interface WrapperAlarmExtraConfigs {
     snsTopicArns?: string[];
     datapointsToAlarm?: number;
     evaluationPeriods?: number;
+    treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
     period?: number;
 }
 

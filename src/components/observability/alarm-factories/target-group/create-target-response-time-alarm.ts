@@ -18,6 +18,7 @@ export default function createAlarm(
     const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
     const datapointsToAlarm =
         extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+    const treatMissingData = extraConfigs?.treatMissingData || constants.TREAT_MISSING_DATA;
 
     const options: pulumi.ResourceOptions = {};
     if (extraConfigs?.parent) {
@@ -40,6 +41,7 @@ export default function createAlarm(
             threshold,
             evaluationPeriods,
             datapointsToAlarm,
+            treatMissingData,
             alarmActions: extraConfigs?.snsTopicArns,
             okActions: extraConfigs?.snsTopicArns,
         },
