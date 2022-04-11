@@ -8,13 +8,20 @@ export default function createAlarm(
     name: string,
     threshold: number,
     configs: AsgConfig,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
     const { asgName } = configs;
 
+    const period = extraConfigs?.period || constants.LONG_PERIOD;
+
+    const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+    const datapointsToAlarm =
+        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+    const treatMissingData = extraConfigs?.treatMissingData || constants.TREAT_MISSING_DATA;
+
     const options: pulumi.ResourceOptions = {};
-    if (extraConfigs.parent) {
-        options.parent = extraConfigs.parent;
+    if (extraConfigs?.parent) {
+        options.parent = extraConfigs?.parent;
     }
 
     return new aws.cloudwatch.MetricAlarm(
@@ -22,7 +29,9 @@ export default function createAlarm(
         {
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,
-            evaluationPeriods: constants.DATAPOINTS,
+            evaluationPeriods,
+            datapointsToAlarm,
+            treatMissingData,
             metricQueries: [
                 {
                     id: 'e1',
@@ -37,7 +46,7 @@ export default function createAlarm(
                         metricName: 'GroupInServiceInstances',
                         dimensions: { AutoScalingGroupName: asgName },
                         stat: 'Maximum',
-                        period: constants.LONG_PERIOD,
+                        period,
                     },
                 },
                 {
@@ -47,12 +56,12 @@ export default function createAlarm(
                         metricName: 'GroupMaxSize',
                         dimensions: { AutoScalingGroupName: asgName },
                         stat: 'Maximum',
-                        period: constants.LONG_PERIOD,
+                        period,
                     },
                 },
             ],
-            alarmActions: extraConfigs.snsTopicArns,
-            okActions: extraConfigs.snsTopicArns,
+            alarmActions: extraConfigs?.snsTopicArns,
+            okActions: extraConfigs?.snsTopicArns,
         },
         options
     );

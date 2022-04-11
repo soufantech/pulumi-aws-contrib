@@ -3,9 +3,16 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { EcsClusterWithAsgConfig } from '../../types';
+import { EcsClusterWithAsgConfig, WidgetExtraConfigs } from '../../types';
 
-function createInstanceAndTaskCountWidgets(clusterName: string, asgName: string): Widget[] {
+function createInstanceAndTaskCountWidgets(
+    clusterName: string,
+    asgName: string,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
+    const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+
     const asgInServiceInstancesMetric = new awsx.cloudwatch.Metric({
         namespace: 'AWS/AutoScaling',
         name: 'GroupInServiceInstances',
@@ -52,8 +59,8 @@ function createInstanceAndTaskCountWidgets(clusterName: string, asgName: string)
             width: 3,
             height: 6,
             metrics: [
-                asgInServiceInstancesMetric.withPeriod(constants.SHORT_PERIOD),
-                asgMaxSizeMetric.withPeriod(constants.SHORT_PERIOD),
+                asgInServiceInstancesMetric.withPeriod(shortPeriod),
+                asgMaxSizeMetric.withPeriod(shortPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
@@ -61,8 +68,8 @@ function createInstanceAndTaskCountWidgets(clusterName: string, asgName: string)
             width: 9,
             height: 6,
             metrics: [
-                asgDesiredCapacityMetric.withPeriod(constants.LONG_PERIOD),
-                asgInServiceInstancesMetric.withPeriod(constants.LONG_PERIOD),
+                asgDesiredCapacityMetric.withPeriod(longPeriod),
+                asgInServiceInstancesMetric.withPeriod(longPeriod),
             ],
         }),
         new awsx.cloudwatch.SingleNumberMetricWidget({
@@ -70,20 +77,26 @@ function createInstanceAndTaskCountWidgets(clusterName: string, asgName: string)
             width: 3,
             height: 6,
             metrics: [
-                serviceCountMetric.withPeriod(constants.SHORT_PERIOD),
-                taskCountMetric.withPeriod(constants.SHORT_PERIOD),
+                serviceCountMetric.withPeriod(shortPeriod),
+                taskCountMetric.withPeriod(shortPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
             title: `Task Count History (${clusterName})`,
             width: 9,
             height: 6,
-            metrics: [taskCountMetric.withPeriod(constants.LONG_PERIOD)],
+            metrics: [taskCountMetric.withPeriod(longPeriod)],
         }),
     ];
 }
 
-function createOnlyTaskCountWidgets(clusterName: string): Widget[] {
+function createOnlyTaskCountWidgets(
+    clusterName: string,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
+    const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+
     const serviceCountMetric = new awsx.cloudwatch.Metric({
         namespace: 'ECS/ContainerInsights',
         name: 'ServiceCount',
@@ -106,25 +119,28 @@ function createOnlyTaskCountWidgets(clusterName: string): Widget[] {
             width: 6,
             height: 4,
             metrics: [
-                serviceCountMetric.withPeriod(constants.SHORT_PERIOD),
-                taskCountMetric.withPeriod(constants.SHORT_PERIOD),
+                serviceCountMetric.withPeriod(shortPeriod),
+                taskCountMetric.withPeriod(shortPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
             title: `Task Count History (${clusterName})`,
             width: 18,
             height: 4,
-            metrics: [taskCountMetric.withPeriod(constants.LONG_PERIOD)],
+            metrics: [taskCountMetric.withPeriod(longPeriod)],
         }),
     ];
 }
 
-export default function createWidgets(configs: EcsClusterWithAsgConfig): Widget[] {
+export default function createWidgets(
+    configs: EcsClusterWithAsgConfig,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
     const { clusterName, asgName } = configs;
 
     if (asgName) {
-        return createInstanceAndTaskCountWidgets(clusterName, asgName);
+        return createInstanceAndTaskCountWidgets(clusterName, asgName, extraConfigs);
     }
 
-    return createOnlyTaskCountWidgets(clusterName);
+    return createOnlyTaskCountWidgets(clusterName, extraConfigs);
 }

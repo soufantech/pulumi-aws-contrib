@@ -8,8 +8,10 @@ How to use
 Features:
 
 - Default option for simplified configuration
-- Possibility to choose the order of widgets
-- Possibility to specify extra widgets
+- Choose the widgets order
+- Specify extra widgets
+- Change the settings of all widgets centrally
+- Use factories
 
 #### Default option for simplified configuration
 
@@ -30,7 +32,7 @@ new EcsServiceDashboard(resourceName, {
 });
 ```
 
-#### Possibility to choose the order of widgets
+#### Choose the widgets order
 
 ```typescript
 import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
@@ -56,7 +58,29 @@ new EcsServiceDashboard(resourceName, {
 });
 ```
 
-#### Possibility to specify extra widgets
+#### Specify extra widgets
+
+```typescript
+import { EcsServiceDashboard, miscWidgets } from '@soufantech/pulumi-aws-contrib';
+
+// ...
+
+new EcsServiceDashboard(resourceName, {
+    configs: {
+        clusterName,
+        serviceName,
+        loadBalancer,
+        targetGroup,
+        asgName,
+    },
+    defaultOptions: true,
+    extraWidgets: {
+        begin: miscWidgets.createAlarmWidgets({ mainAlarms: alarmArns }),
+    },
+});
+```
+
+#### Change the settings of all widgets centrally
 
 ```typescript
 import { EcsServiceDashboard } from '@soufantech/pulumi-aws-contrib';
@@ -71,26 +95,55 @@ new EcsServiceDashboard(resourceName, {
         targetGroup,
         asgName,
     },
-    extraWidgets: {
-        begin: [
-            ...createAlarmWidgets({ mainAlarms: alarmsArns }),
-            ...EcsServiceDashboard.createTaskCountWidgets(clusterName, serviceName, asgName),
-            ...EcsServiceDashboard.createUptimeAndHealthyStatusWidgets(loadBalancer, targetGroup),
-            ...EcsServiceDashboard.createLatencyAndRequestCountWidgets(loadBalancer, targetGroup),
-            ...EcsServiceDashboard.createMemoryAndCpuUtizilationWidgets(clusterName, serviceName),
-            ...EcsServiceDashboard.createMemoryAndCpuExtraInfoWidgets(clusterName, serviceName),
-            ...EcsServiceDashboard.createNetworkAndStorageWidgets(clusterName, serviceName),
-        ],
+    defaultOptions: true,
+    extraConfigs: {
+      shortPeriod: 60,
+      longPeriod: 300,
     },
 });
+```
+
+#### Use factories
+
+```typescript
+import * as awsx from '@pulumi/awsx';
+import * as pulumi from '@pulumi/pulumi';
+
+import { ecsServiceWidgets, miscWidgets, tgWidgets } from '@soufantech/pulumi-aws-contrib';
+
+// ...
+
+const dashboardComponent = new pulumi.ComponentResource(
+    'contrib:components:DashboardAggregator',
+    resourceName
+);
+
+const dashboard = new awsx.cloudwatch.Dashboard(
+    resourceName,
+    {
+        widgets: [
+            ...miscWidgets.createAlarmWidgets({ mainAlarms: alarmArns }),
+            ...ecsServiceWidgets.createTaskCountWidgets({ clusterName, serviceName, asgName }),
+            ...tgWidgets.createUptimeAndHealthyWidgets({ loadBalancer, targetGroup }),
+            ...tgWidgets.createLatencyAndRequestCountWidgets({ loadBalancer, targetGroup }),
+            ...ecsServiceWidgets.createMemoryAndCpuWidgets({ clusterName, serviceName }),
+            ...ecsServiceWidgets.createMemoryAndCpuExtraWidgets({ clusterName, serviceName }),
+            ...ecsServiceWidgets.createNetworkAndStorageWidgets({ clusterName, serviceName }),
+        ],
+    },
+    { parent: dashboardComponent }
+);
 ```
 
 ### Alarm components
 
 Features:
 
-- Possibility to choose which alarms to activate
-- Possibility to specify on which SNS topics to trigger the alarm
+- Choose which alarms to activate
+- Change the settings of all alarms centrally
+- Use factories
+
+#### Choose which alarms to activate
 
 ```typescript
 import { EcsServiceAlarm } from '@soufantech/pulumi-aws-contrib';
@@ -116,39 +169,67 @@ const alarms = new EcsServiceAlarm(resourceName, {
         storageWriteBytes: 2 * 1024 * 1024,
         storageReadBytes: 400 * 1024 * 1024,
     },
-    snsTopicArns,
 });
 const alarmsArns = Object.values(alarms.alarms || []).map((alarm) => alarm.arn);
 ```
 
-### Alarm factories
-
-For individualized settings on each alarm use factories.
+#### Change the settings of all alarms centrally
 
 ```typescript
-import { asgAlarm, ecsClusterAlarm } from '@soufantech/pulumi-aws-contrib';
+import { EcsServiceAlarm } from '@soufantech/pulumi-aws-contrib';
 
 // ...
 
-const component = new pulumi.ComponentResource(
-    'contrib:components:AlarmAggregator',
+const alarms = new EcsServiceAlarm(resourceName, {
+    configs: {
+        clusterName,
+        serviceName,
+        loadBalancer,
+        targetGroup,
+    },
+    options: {
+        uptime: 95,
+        targetResponseTime: 0.5,
+    },
+    extraConfigs: {
+        snsTopicArns,
+        datapointsToAlarm: 5,
+        evaluationPeriods: 5,
+        period: 300,
+    },
+});
+const alarmsArns = Object.values(alarms.alarms || []).map((alarm) => alarm.arn);
+```
+
+#### Use factories
+
+```typescript
+import * as pulumi from '@pulumi/pulumi';
+
+import { ecsServiceAlarm, tgAlarm } from '@soufantech/pulumi-aws-contrib';
+
+// ...
+
+const alarmComponent = new pulumi.ComponentResource(
+    'contrib:components:EcsServiceAlarm',
     resourceName
 );
 
-const alarmArns = [
-    asgAlarm.createAsgMaxGroupSizeAlarm(
+const alarms = [
+    tgAlarm.createUptimeAlarm(
         resourceName,
-        80,
-        { asgName },
-        { parent: component, snsTopicArns },
+        95,
+        { loadBalancer, targetGroup },
+        { parent: alarmComponent, snsTopicArns }
     ),
-    ecsClusterAlarm.createCpuUtilizationAlarm(
+    ecsServiceAlarm.createCpuUtilizationAlarm(
         resourceName,
-        60,
-        { clusterName },
-        { parent: component, snsTopicArns },
+        5,
+        { clusterName, serviceName },
+        { parent: alarmComponent, snsTopicArns }
     ),
-].map((alarm) => alarm.arn);
+];
+const alarmArns = alarms.map((alarm) => alarm.arn);
 ```
 
 Problem fix
@@ -292,7 +373,7 @@ How to contribute
 
 ### In alarm components
 
-#### Create new alarm factory
+#### Create new alarm factory (for use in ComponentResource)
 
 The alarms are separated by categories according to the parameters received in the `configs` attribute. See below the interface of an alarm factory.
 
@@ -301,7 +382,7 @@ type AlarmFactory = (
     name: string,
     threshold: number,
     configs: Record<string, string>,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ) => aws.cloudwatch.MetricAlarm;
 ```
 
@@ -310,6 +391,7 @@ type AlarmFactory = (
 - Use `export default function createAlarm();`
 - `configs` can be a more specific type
   - e.g. `AlbConfig`, `TargetGroupConfig`, `EcsClusterConfig`, etc
+- Create and populate default values for `extraConfigs` attributes
 - Create and populate `options` object
 - Create `MetricAlarm` with `aws` module
   - or create `Metric` and then use `createAlarm` with `awsx` module
@@ -318,6 +400,7 @@ type AlarmFactory = (
 #### Create new alarm factory category
 
 - Create directory for new alarm category (categories are based on required `configs`)
+  - e.g. `ecs-service` requires `clusterName` and `serviceName` in `configs`
 - Create index file inside directory
 - Add as module in index file hierarchically above
 
@@ -329,8 +412,8 @@ Factories are encapsulated by private methods responsible for translating the mo
 type WrapperAlarmFactory = (
     name: string,
     threshold: number,
-    config: Record<string, string>,
-    snsTopicArns?: string[]
+    configs: Record<string, string>,
+    extraConfigs?: WrapperAlarmExtraConfigs
 ) => aws.cloudwatch.MetricAlarm | undefined;
 ```
 
@@ -349,12 +432,15 @@ Steps:
 
 ### In dashboard components
 
-#### Create new widget factory
+#### Create new widget factory (for use in ComponentResource)
 
 The widgets are separated by categories according to the parameters received in the `configs` attribute. See below the interface of a widget factory.
 
 ```typescript
-type WidgetFactory = (configs: Record<string, string>) => Widget[];
+type WidgetFactory = (
+    configs: Record<string, string>,
+    extraConfigs?: WidgetExtraConfigs
+) => Widget[];
 ```
 
 - Identify the widget category
@@ -362,12 +448,14 @@ type WidgetFactory = (configs: Record<string, string>) => Widget[];
 - Use `export default function createWidgets();`
 - `configs` can be a more specific type
   - e.g. `AlbConfig`, `TargetGroupConfig`, `EcsClusterConfig`, etc
+- Create and populate default values for `extraConfigs` attributes
 - Create `Metric` or `ExpressionWidgetMetric` and then use in widgets components (with `awsx`)
 - Add to category index
 
 #### Create new widget factory category
 
 - Create directory for new widget category (categories are based on required `configs`)
+  - e.g. `ecs-service` requires `clusterName` and `serviceName` in `configs`
 - Create index file inside directory
 - Add as module in index file hierarchically above
 
@@ -376,7 +464,10 @@ type WidgetFactory = (configs: Record<string, string>) => Widget[];
 Factories are encapsulated by private methods responsible for translating the most simplified configurations to specific configurations. See below the interface of a private method.
 
 ```typescript
-type WrapperWidgetFactory = (configs: Record<string, string>) => Widget[];
+type WrapperWidgetFactory = (
+    configs: Record<string, string>,
+    extraConfigs?: WrapperWidgetExtraConfigs
+) => Widget[];
 ```
 
 - Create private method calling factory

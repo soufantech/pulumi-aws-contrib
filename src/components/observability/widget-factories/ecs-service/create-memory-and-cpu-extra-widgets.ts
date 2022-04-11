@@ -3,10 +3,17 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { EcsServiceConfig } from '../../types';
+import { EcsServiceConfig, WidgetExtraConfigs } from '../../types';
 
-export default function createWidgets(configs: EcsServiceConfig): Widget[] {
+export default function createWidgets(
+    configs: EcsServiceConfig,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
     const { clusterName, serviceName } = configs;
+
+    const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+
     const memoryReservedMetric = new awsx.cloudwatch.Metric({
         namespace: 'ECS/ContainerInsights',
         name: 'MemoryReserved',
@@ -57,25 +64,19 @@ export default function createWidgets(configs: EcsServiceConfig): Widget[] {
             width: 3,
             height: 6,
             metrics: [
-                memoryReservedMetric.withPeriod(constants.SHORT_PERIOD),
-                memoryUtilizedMetric.withPeriod(constants.SHORT_PERIOD),
+                memoryReservedMetric.withPeriod(shortPeriod),
+                memoryUtilizedMetric.withPeriod(shortPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
             title: 'Memory Overflow',
             width: 9,
             height: 6,
-            period: constants.LONG_PERIOD,
+            period: longPeriod,
             metrics: [
                 memoryOverflowExpression,
-                memoryReservedMetric
-                    .withId('m1')
-                    .withPeriod(constants.LONG_PERIOD)
-                    .withVisible(false),
-                memoryUtilizedMetric
-                    .withId('m2')
-                    .withPeriod(constants.LONG_PERIOD)
-                    .withVisible(false),
+                memoryReservedMetric.withId('m1').withPeriod(longPeriod).withVisible(false),
+                memoryUtilizedMetric.withId('m2').withPeriod(longPeriod).withVisible(false),
             ],
         }),
         new awsx.cloudwatch.SingleNumberMetricWidget({
@@ -83,19 +84,19 @@ export default function createWidgets(configs: EcsServiceConfig): Widget[] {
             width: 3,
             height: 6,
             metrics: [
-                cpuReservedMetric.withPeriod(constants.SHORT_PERIOD),
-                cpuUtilizedMetric.withPeriod(constants.SHORT_PERIOD),
+                cpuReservedMetric.withPeriod(shortPeriod),
+                cpuUtilizedMetric.withPeriod(shortPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
             title: 'CPU Overflow',
             width: 9,
             height: 6,
-            period: constants.LONG_PERIOD,
+            period: longPeriod,
             metrics: [
                 cpuOverflowExpression,
-                cpuReservedMetric.withId('m1').withPeriod(constants.LONG_PERIOD).withVisible(false),
-                cpuUtilizedMetric.withId('m2').withPeriod(constants.LONG_PERIOD).withVisible(false),
+                cpuReservedMetric.withId('m1').withPeriod(longPeriod).withVisible(false),
+                cpuUtilizedMetric.withId('m2').withPeriod(longPeriod).withVisible(false),
             ],
         }),
     ];

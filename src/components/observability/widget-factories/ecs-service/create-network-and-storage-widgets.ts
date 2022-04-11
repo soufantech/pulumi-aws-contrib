@@ -3,10 +3,15 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { EcsServiceConfig } from '../../types';
+import { EcsServiceConfig, WidgetExtraConfigs } from '../../types';
 
-export default function createWidgets(configs: EcsServiceConfig): Widget[] {
+export default function createWidgets(
+    configs: EcsServiceConfig,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
     const { clusterName, serviceName } = configs;
+
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
     const networkTxBytesMetric = new awsx.cloudwatch.Metric({
         namespace: 'ECS/ContainerInsights',
@@ -46,8 +51,8 @@ export default function createWidgets(configs: EcsServiceConfig): Widget[] {
             width: 12,
             height: 6,
             metrics: [
-                networkTxBytesMetric.withPeriod(constants.LONG_PERIOD),
-                networkRxBytesMetric.withPeriod(constants.LONG_PERIOD),
+                networkTxBytesMetric.withPeriod(longPeriod),
+                networkRxBytesMetric.withPeriod(longPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
@@ -55,8 +60,8 @@ export default function createWidgets(configs: EcsServiceConfig): Widget[] {
             width: 12,
             height: 6,
             metrics: [
-                storageWriteBytesMetric.withPeriod(constants.LONG_PERIOD),
-                storageReadBytesMetric.withPeriod(constants.LONG_PERIOD),
+                storageWriteBytesMetric.withPeriod(longPeriod),
+                storageReadBytesMetric.withPeriod(longPeriod),
             ],
         }),
     ];

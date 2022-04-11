@@ -3,7 +3,15 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch/widget';
 import * as pulumi from '@pulumi/pulumi';
 
-import { EcsServiceConfig, TargetGroupConfig, AsgConfig, ExtraWidgets } from './types';
+import {
+    EcsServiceConfig,
+    TargetGroupConfig,
+    AsgConfig,
+    ExtraWidgets,
+    WidgetExtraConfigs,
+    WrapperWidgetExtraConfigs,
+} from './types';
+import { ecsAggregationWidgets } from './widget-factories';
 
 export interface EcsAggregationDashboardServiceConfig {
     serviceConfig: EcsServiceConfig;
@@ -14,12 +22,20 @@ export interface EcsAggregationDashboardInstanceConfig {
     asgConfig: AsgConfig;
 }
 
-export type EcsAggregationDashboardConfig = {
-    services?: EcsAggregationDashboardServiceConfig[];
+export type EcsServiceAggregationDashboardConfig = {
+    services: EcsAggregationDashboardServiceConfig[];
     instances?: EcsAggregationDashboardInstanceConfig[];
 };
 
-export type EcsAggregationDashboardConfigKey = keyof EcsAggregationDashboardConfig;
+export type EcsServiceAggregationWidgetFactory = (
+    configs: EcsServiceAggregationDashboardConfig,
+    extraConfigs?: WidgetExtraConfigs
+) => Widget[];
+
+export type WrapperEcsServiceAggregationWidgetFactory = (
+    configs: EcsServiceAggregationDashboardConfig,
+    extraConfigs?: WrapperWidgetExtraConfigs
+) => Widget[];
 
 export type EcsAggregationDashboardOptionKey =
     | 'task'
@@ -29,59 +45,34 @@ export type EcsAggregationDashboardOptionKey =
     | 'instanceHardware';
 
 export interface EcsAggregationDashboardArgs {
-    services: EcsAggregationDashboardServiceConfig[];
-    instances?: EcsAggregationDashboardInstanceConfig[];
+    configs: EcsServiceAggregationDashboardConfig;
     options?: EcsAggregationDashboardOptionKey[];
     defaultOptions?: boolean;
+    extraConfigs?: WrapperWidgetExtraConfigs;
     extraWidgets?: ExtraWidgets;
 }
 
-export interface EcsAggregationDashboardActionValue {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    run: (...args: any[]) => Widget[];
-    args: EcsAggregationDashboardConfigKey[];
-}
+export type EcsAggregationDashboardActionValue = WrapperEcsServiceAggregationWidgetFactory;
 
 export type EcsAggregationDashboardActionDict = {
     [option in EcsAggregationDashboardOptionKey]: EcsAggregationDashboardActionValue;
 };
 
-const dinamicPeriod = 60;
-
 export default class EcsAggregationDashboard extends pulumi.ComponentResource {
     readonly dashboard: awsx.cloudwatch.Dashboard;
 
     static readonly actionDict: EcsAggregationDashboardActionDict = {
-        task: {
-            run: EcsAggregationDashboard.createTaskCountWidgets,
-            args: ['services', 'instances'],
-        },
-        health: {
-            run: EcsAggregationDashboard.createUptimeAndHealthyStatusWidgets,
-            args: ['services'],
-        },
-        request: {
-            run: EcsAggregationDashboard.createLatencyAndRequestCountWidgets,
-            args: ['services'],
-        },
-        serviceHardware: {
-            run: EcsAggregationDashboard.createServiceMemoryAndCpuUtizilationWidgets,
-            args: ['services'],
-        },
-        instanceHardware: {
-            run: EcsAggregationDashboard.createInstanceMemoryAndCpuUtizilationWidgets,
-            args: ['services'],
-        },
+        task: EcsAggregationDashboard.createTaskCountWidgets,
+        health: EcsAggregationDashboard.createUptimeAndHealthyStatusWidgets,
+        request: EcsAggregationDashboard.createLatencyAndRequestCountWidgets,
+        serviceHardware: EcsAggregationDashboard.createServiceMemoryAndCpuUtizilationWidgets,
+        instanceHardware: EcsAggregationDashboard.createInstanceMemoryAndCpuUtizilationWidgets,
     };
 
     constructor(name: string, args: EcsAggregationDashboardArgs, opts?: pulumi.ResourceOptions) {
         super('contrib:components:EcsAggregationDashboard', name, {}, opts);
 
-        const { services, instances, options, defaultOptions, extraWidgets } = args;
-        const configs = {
-            services,
-            instances: instances || [],
-        };
+        const { configs, options, defaultOptions, extraConfigs, extraWidgets } = args;
 
         const computedOptions: EcsAggregationDashboardOptionKey[] = [];
         if (defaultOptions) {
@@ -103,13 +94,7 @@ export default class EcsAggregationDashboard extends pulumi.ComponentResource {
         /* eslint-disable security/detect-object-injection */
         widgets.push(
             ...computedOptions
-                .map((option) =>
-                    EcsAggregationDashboard.actionDict[option].run(
-                        ...EcsAggregationDashboard.actionDict[option].args.map(
-                            (argName) => configs[argName]
-                        )
-                    )
-                )
+                .map((option) => EcsAggregationDashboard.actionDict[option](configs, extraConfigs))
                 .flat()
         );
         /* eslint-enable security/detect-object-injection */
@@ -120,437 +105,88 @@ export default class EcsAggregationDashboard extends pulumi.ComponentResource {
     }
 
     static createTaskCountWidgets(
-        services?: EcsAggregationDashboardServiceConfig[],
-        instances?: EcsAggregationDashboardInstanceConfig[]
+        configs: EcsServiceAggregationDashboardConfig,
+        extraConfigs?: WrapperWidgetExtraConfigs
     ): Widget[] {
-        if (instances?.length) {
-            return EcsAggregationDashboard.createInstanceAndTaskCountWidgets(services, instances);
-        }
+        const { services, instances } = configs;
+        if (!services?.length || !instances?.length) return [];
 
-        return EcsAggregationDashboard.createOnlyTaskCountWidgets(services);
-    }
+        const ecsServiceAggregationWithInstanceConfig: EcsServiceAggregationDashboardConfig = {
+            services,
+            instances,
+        };
 
-    static createInstanceAndTaskCountWidgets(
-        services?: EcsAggregationDashboardServiceConfig[],
-        instances?: EcsAggregationDashboardInstanceConfig[]
-    ): Widget[] {
-        if (!services || !instances) return [];
-
-        const asgInServiceInstancesMetrics = instances.map(
-            (instance) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'AWS/AutoScaling',
-                    name: 'GroupInServiceInstances',
-                    label: instance.asgConfig.asgName,
-                    dimensions: { AutoScalingGroupName: instance.asgConfig.asgName },
-                    statistic: 'Maximum',
-                    period: dinamicPeriod,
-                })
+        return ecsAggregationWidgets.createTaskCountWidgets(
+            ecsServiceAggregationWithInstanceConfig,
+            extraConfigs
         );
-
-        const runningTaskCountMetrics = services.map(
-            (service) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'ECS/ContainerInsights',
-                    name: 'RunningTaskCount',
-                    label: service.serviceConfig.serviceName,
-                    dimensions: {
-                        ClusterName: service.serviceConfig.clusterName,
-                        ServiceName: service.serviceConfig.serviceName,
-                    },
-                    statistic: 'Maximum',
-                    period: dinamicPeriod,
-                })
-        );
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Instance Count History',
-                width: 12,
-                height: 6,
-                metrics: asgInServiceInstancesMetrics,
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Task Count History',
-                width: 12,
-                height: 6,
-                metrics: runningTaskCountMetrics,
-            }),
-        ];
-    }
-
-    static createOnlyTaskCountWidgets(services?: EcsAggregationDashboardServiceConfig[]): Widget[] {
-        if (!services) return [];
-
-        const runningTaskCountMetrics = services.map(
-            (service) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'ECS/ContainerInsights',
-                    name: 'RunningTaskCount',
-                    label: 'RunningTaskCount',
-                    dimensions: {
-                        ClusterName: service.serviceConfig.clusterName,
-                        ServiceName: service.serviceConfig.serviceName,
-                    },
-                    statistic: 'Maximum',
-                    period: dinamicPeriod,
-                })
-        );
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Task Count History',
-                width: 24,
-                height: 6,
-                metrics: runningTaskCountMetrics,
-            }),
-        ];
     }
 
     static createUptimeAndHealthyStatusWidgets(
-        services?: EcsAggregationDashboardServiceConfig[]
+        configs: EcsServiceAggregationDashboardConfig,
+        extraConfigs?: WrapperWidgetExtraConfigs
     ): Widget[] {
-        if (!services) return [];
+        const { services } = configs;
+        if (!services?.length) return [];
 
-        const albConfigs = services
-            .map((service) => service.targetGroupConfig)
-            .filter((targetGroupConfig) => targetGroupConfig) as TargetGroupConfig[];
+        const ecsServiceAggregationWithInstanceConfig: EcsServiceAggregationDashboardConfig = {
+            services,
+        };
 
-        if (!albConfigs.length) {
-            return [];
-        }
-
-        const uptimeHistoryMetrics = albConfigs.reduce((acc, albConfig, index) => {
-            const firstMetricId = `m${index * 2 + 1}`;
-            const secondMetricId = `m${index * 2 + 2}`;
-            const expressionId = `e${index + 1}`;
-
-            const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
-
-            acc.push(
-                new awsx.cloudwatch.Metric({
-                    id: firstMetricId,
-                    namespace: 'AWS/ApplicationELB',
-                    name: 'RequestCount',
-                    label: `RequestCount ${targetGroupName}`,
-                    dimensions: {
-                        LoadBalancer: albConfig.loadBalancer,
-                        TargetGroup: albConfig.targetGroup,
-                    },
-                    statistic: 'SampleCount',
-                    period: dinamicPeriod,
-                    visible: false,
-                })
-            );
-
-            acc.push(
-                new awsx.cloudwatch.Metric({
-                    id: secondMetricId,
-                    namespace: 'AWS/ApplicationELB',
-                    name: 'HTTPCode_Target_5XX_Count',
-                    label: `HTTPCode_Target_5XX_Count ${targetGroupName}`,
-                    dimensions: {
-                        LoadBalancer: albConfig.loadBalancer,
-                        TargetGroup: albConfig.targetGroup,
-                    },
-                    statistic: 'SampleCount',
-                    period: dinamicPeriod,
-                    visible: false,
-                })
-            );
-
-            acc.push(
-                new awsx.cloudwatch.ExpressionWidgetMetric(
-                    `(1-(${secondMetricId}/${firstMetricId}))*100`,
-                    targetGroupName,
-                    expressionId
-                )
-            );
-
-            return acc;
-        }, [] as awsx.cloudwatch.WidgetMetric[]);
-
-        const healthyHistoryMetrics = albConfigs.reduce((acc, albConfig, index) => {
-            const firstMetricId = `m${index * 2 + 1}`;
-            const secondMetricId = `m${index * 2 + 2}`;
-            const expressionId = `e${index + 1}`;
-
-            const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
-
-            acc.push(
-                new awsx.cloudwatch.Metric({
-                    id: firstMetricId,
-                    namespace: 'AWS/ApplicationELB',
-                    name: 'HealthyHostCount',
-                    label: `HealthyHostCount ${targetGroupName}`,
-                    dimensions: {
-                        LoadBalancer: albConfig.loadBalancer,
-                        TargetGroup: albConfig.targetGroup,
-                    },
-                    statistic: 'Maximum',
-                    period: dinamicPeriod,
-                    visible: false,
-                })
-            );
-
-            acc.push(
-                new awsx.cloudwatch.Metric({
-                    id: secondMetricId,
-                    namespace: 'AWS/ApplicationELB',
-                    name: 'UnHealthyHostCount',
-                    label: `UnHealthyHostCount ${targetGroupName}`,
-                    dimensions: {
-                        LoadBalancer: albConfig.loadBalancer,
-                        TargetGroup: albConfig.targetGroup,
-                    },
-                    statistic: 'Maximum',
-                    period: dinamicPeriod,
-                    visible: false,
-                })
-            );
-
-            acc.push(
-                new awsx.cloudwatch.ExpressionWidgetMetric(
-                    `(1-(${secondMetricId}/${firstMetricId}))*100`,
-                    targetGroupName,
-                    expressionId
-                )
-            );
-
-            return acc;
-        }, [] as awsx.cloudwatch.WidgetMetric[]);
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Uptime History',
-                width: 12,
-                height: 4,
-                period: dinamicPeriod,
-                metrics: uptimeHistoryMetrics,
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Healthy History',
-                width: 12,
-                height: 4,
-                period: dinamicPeriod,
-                metrics: healthyHistoryMetrics,
-            }),
-        ];
+        return ecsAggregationWidgets.createUptimeAndHealthyWidgets(
+            ecsServiceAggregationWithInstanceConfig,
+            extraConfigs
+        );
     }
 
     static createLatencyAndRequestCountWidgets(
-        services?: EcsAggregationDashboardServiceConfig[]
+        configs: EcsServiceAggregationDashboardConfig,
+        extraConfigs?: WrapperWidgetExtraConfigs
     ): Widget[] {
-        if (!services) return [];
+        const { services } = configs;
+        if (!services?.length) return [];
 
-        const albConfigs = services
-            .map((service) => service.targetGroupConfig)
-            .filter((targetGroupConfig) => targetGroupConfig) as TargetGroupConfig[];
+        const ecsServiceAggregationWithInstanceConfig: EcsServiceAggregationDashboardConfig = {
+            services,
+        };
 
-        if (!albConfigs.length) {
-            return [];
-        }
-
-        const latencyWarning = 0.3;
-        const latencyAlarm = 0.5;
-
-        const targetResponseTimeMetrics = albConfigs.map((albConfig) => {
-            const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
-
-            return new awsx.cloudwatch.Metric({
-                namespace: 'AWS/ApplicationELB',
-                name: 'TargetResponseTime',
-                label: targetGroupName,
-                dimensions: {
-                    LoadBalancer: albConfig.loadBalancer,
-                    TargetGroup: albConfig.targetGroup,
-                },
-                statistic: 'Average',
-                period: dinamicPeriod,
-            });
-        });
-
-        const requestCountMetrics = albConfigs.map((albConfig) => {
-            const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
-
-            return new awsx.cloudwatch.Metric({
-                namespace: 'AWS/ApplicationELB',
-                name: 'RequestCount',
-                label: targetGroupName,
-                dimensions: {
-                    LoadBalancer: albConfig.loadBalancer,
-                    TargetGroup: albConfig.targetGroup,
-                },
-                statistic: 'Sum',
-                period: dinamicPeriod,
-            });
-        });
-
-        const warningColor = '#ff7f0e';
-        const alarmColor = '#d62728';
-        const annotations = [];
-
-        if (latencyWarning) {
-            annotations.push(
-                new awsx.cloudwatch.HorizontalAnnotation({
-                    aboveEdge: { label: 'In warning', value: latencyWarning },
-                    color: warningColor,
-                })
-            );
-        }
-
-        if (latencyAlarm) {
-            annotations.push(
-                new awsx.cloudwatch.HorizontalAnnotation({
-                    aboveEdge: { label: 'In alarm', value: latencyAlarm },
-                    color: alarmColor,
-                })
-            );
-        }
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Target Group Latency',
-                width: 12,
-                height: 6,
-                annotations,
-                metrics: targetResponseTimeMetrics,
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Request Count',
-                width: 12,
-                height: 6,
-                metrics: requestCountMetrics,
-            }),
-        ];
+        return ecsAggregationWidgets.createLatencyAndRequestCountWidgets(
+            ecsServiceAggregationWithInstanceConfig,
+            extraConfigs
+        );
     }
 
     static createServiceMemoryAndCpuUtizilationWidgets(
-        services?: EcsAggregationDashboardServiceConfig[]
+        configs: EcsServiceAggregationDashboardConfig,
+        extraConfigs?: WrapperWidgetExtraConfigs
     ): Widget[] {
-        if (!services) return [];
+        const { services } = configs;
+        if (!services?.length) return [];
 
-        const serviceConfigs = services.map((service) => service.serviceConfig);
+        const ecsServiceAggregationWithInstanceConfig: EcsServiceAggregationDashboardConfig = {
+            services,
+        };
 
-        const memoryUtilizationMetrics = serviceConfigs.map(
-            (serviceConfig) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'AWS/ECS',
-                    name: 'MemoryUtilization',
-                    label: serviceConfig.serviceName,
-                    dimensions: {
-                        ClusterName: serviceConfig.clusterName,
-                        ServiceName: serviceConfig.serviceName,
-                    },
-                    statistic: 'Average',
-                    period: dinamicPeriod,
-                })
+        return ecsAggregationWidgets.createServiceMemoryAndCpuWidgets(
+            ecsServiceAggregationWithInstanceConfig,
+            extraConfigs
         );
-
-        const cpuUtilizationMetrics = serviceConfigs.map(
-            (serviceConfig) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'AWS/ECS',
-                    name: 'CPUUtilization',
-                    label: serviceConfig.serviceName,
-                    dimensions: {
-                        ClusterName: serviceConfig.clusterName,
-                        ServiceName: serviceConfig.serviceName,
-                    },
-                    statistic: 'Average',
-                    period: dinamicPeriod,
-                })
-        );
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Service Memory Utilization',
-                width: 12,
-                height: 6,
-                metrics: memoryUtilizationMetrics,
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Service CPU Utilization',
-                width: 12,
-                height: 6,
-                metrics: cpuUtilizationMetrics,
-            }),
-        ];
     }
 
     static createInstanceMemoryAndCpuUtizilationWidgets(
-        services?: EcsAggregationDashboardServiceConfig[]
+        configs: EcsServiceAggregationDashboardConfig,
+        extraConfigs?: WrapperWidgetExtraConfigs
     ): Widget[] {
-        if (!services) return [];
+        const { services } = configs;
+        if (!services?.length) return [];
 
-        const clusters = Array.from(
-            services.reduce(
-                (acc, service) => acc.add(service.serviceConfig.clusterName.toString()),
-                new Set<string>()
-            )
+        const ecsServiceAggregationWithInstanceConfig: EcsServiceAggregationDashboardConfig = {
+            services,
+        };
+
+        return ecsAggregationWidgets.createInstanceMemoryAndCpuWidgets(
+            ecsServiceAggregationWithInstanceConfig,
+            extraConfigs
         );
-
-        const memoryReservationMetrics = clusters.map(
-            (clusterName) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'AWS/ECS',
-                    name: 'MemoryReservation',
-                    label: clusterName,
-                    dimensions: {
-                        ClusterName: clusterName,
-                    },
-                    statistic: 'Average',
-                    period: dinamicPeriod,
-                })
-        );
-
-        const memoryUtilizationMetrics = clusters.map(
-            (clusterName) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'AWS/ECS',
-                    name: 'MemoryUtilization',
-                    label: clusterName,
-                    dimensions: {
-                        ClusterName: clusterName,
-                    },
-                    statistic: 'Average',
-                    period: dinamicPeriod,
-                })
-        );
-
-        const cpuUtilizationMetrics = clusters.map(
-            (clusterName) =>
-                new awsx.cloudwatch.Metric({
-                    namespace: 'AWS/ECS',
-                    name: 'CPUUtilization',
-                    label: clusterName,
-                    dimensions: {
-                        ClusterName: clusterName,
-                    },
-                    statistic: 'Average',
-                    period: dinamicPeriod,
-                })
-        );
-
-        return [
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Instance Memory Reservation',
-                width: 8,
-                height: 6,
-                metrics: memoryReservationMetrics,
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Instance Memory Utilization',
-                width: 8,
-                height: 6,
-                metrics: memoryUtilizationMetrics,
-            }),
-            new awsx.cloudwatch.LineGraphMetricWidget({
-                title: 'Instance CPU Utilization',
-                width: 8,
-                height: 6,
-                metrics: cpuUtilizationMetrics,
-            }),
-        ];
     }
 }

@@ -3,10 +3,15 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { EcsServiceConfig } from '../../types';
+import { EcsServiceConfig, WidgetExtraConfigs } from '../../types';
 
-export default function createWidgets(configs: EcsServiceConfig): Widget[] {
+export default function createWidgets(
+    configs: EcsServiceConfig,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
     const { clusterName, serviceName } = configs;
+
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
     const memoryUtilizationMetric = new awsx.cloudwatch.Metric({
         namespace: 'AWS/ECS',
@@ -41,20 +46,20 @@ export default function createWidgets(configs: EcsServiceConfig): Widget[] {
             title: 'Memory Utilization',
             width: 12,
             height: 6,
-            period: constants.LONG_PERIOD,
+            period: longPeriod,
             metrics: [
                 memoryAnomalyDetectionExpression,
-                memoryUtilizationMetric.withId('m1').withPeriod(constants.LONG_PERIOD),
+                memoryUtilizationMetric.withId('m1').withPeriod(longPeriod),
             ],
         }),
         new awsx.cloudwatch.LineGraphMetricWidget({
             title: 'CPU Utilization',
             width: 12,
             height: 6,
-            period: constants.LONG_PERIOD,
+            period: longPeriod,
             metrics: [
                 cpuAnomalyDetectionExpression,
-                cpuUtilizationMetric.withId('m1').withPeriod(constants.LONG_PERIOD),
+                cpuUtilizationMetric.withId('m1').withPeriod(longPeriod),
             ],
         }),
     ];

@@ -2,6 +2,8 @@ import aws from '@pulumi/aws';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 import pulumi from '@pulumi/pulumi';
 
+export type ValueOf<T> = T[keyof T];
+
 export interface EcsClusterConfig {
     clusterName: string;
 }
@@ -43,22 +45,50 @@ export interface ExtraWidgets {
 export interface AlarmExtraConfigs {
     parent?: pulumi.Resource;
     snsTopicArns?: string[];
+    datapointsToAlarm?: number;
+    evaluationPeriods?: number;
+    treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
+    period?: number;
+}
+
+export interface WrapperAlarmExtraConfigs {
+    snsTopicArns?: string[];
+    datapointsToAlarm?: number;
+    evaluationPeriods?: number;
+    treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
+    period?: number;
+}
+
+export interface WidgetExtraConfigs {
+    shortPeriod?: number;
+    longPeriod?: number;
+}
+
+export interface WrapperWidgetExtraConfigs {
+    shortPeriod?: number;
+    longPeriod?: number;
 }
 
 export type AlarmFactory = (
     name: string,
     threshold: number,
     configs: Record<string, string>,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ) => aws.cloudwatch.MetricAlarm;
 
 export type WrapperAlarmFactory = (
     name: string,
     threshold: number,
     configs: Record<string, string>,
-    snsTopicArns?: string[]
+    extraConfigs?: WrapperAlarmExtraConfigs
 ) => aws.cloudwatch.MetricAlarm | undefined;
 
-export type WidgetFactory = (configs: Record<string, string>) => Widget[];
+export type WidgetFactory = (
+    configs: Record<string, string>,
+    extraConfigs?: WidgetExtraConfigs
+) => Widget[];
 
-export type WrapperWidgetFactory = (configs: Record<string, string>) => Widget[];
+export type WrapperWidgetFactory = (
+    configs: Record<string, string>,
+    extraConfigs?: WrapperWidgetExtraConfigs
+) => Widget[];

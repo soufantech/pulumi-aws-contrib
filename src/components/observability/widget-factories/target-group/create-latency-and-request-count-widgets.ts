@@ -3,10 +3,15 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { TargetGroupConfig } from '../../types';
+import { TargetGroupConfig, WidgetExtraConfigs } from '../../types';
 
-export default function createWidgets(configs: TargetGroupConfig): Widget[] {
+export default function createWidgets(
+    configs: TargetGroupConfig,
+    extraConfigs?: WidgetExtraConfigs
+): Widget[] {
     const { loadBalancer, targetGroup } = configs;
+
+    const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
     const targetResponseTimeMetric = new awsx.cloudwatch.Metric({
         namespace: 'AWS/ApplicationELB',
@@ -79,27 +84,27 @@ export default function createWidgets(configs: TargetGroupConfig): Widget[] {
             annotations,
             metrics: [
                 targetResponseTimeMetric
-                    .withPeriod(constants.LONG_PERIOD)
+                    .withPeriod(longPeriod)
                     .withStatistic('Minimum')
                     .withLabel('TargetResponseTime Minimum'),
                 targetResponseTimeMetric
-                    .withPeriod(constants.LONG_PERIOD)
+                    .withPeriod(longPeriod)
                     .withStatistic('Average')
                     .withLabel('TargetResponseTime Average'),
                 targetResponseTimeMetric
-                    .withPeriod(constants.LONG_PERIOD)
+                    .withPeriod(longPeriod)
                     .withStatistic('Maximum')
                     .withLabel('TargetResponseTime Maximum'),
                 targetResponseTimeMetric
-                    .withPeriod(constants.LONG_PERIOD)
+                    .withPeriod(longPeriod)
                     .withExtendedStatistic(50)
                     .withLabel('TargetResponseTime p50'),
                 targetResponseTimeMetric
-                    .withPeriod(constants.LONG_PERIOD)
+                    .withPeriod(longPeriod)
                     .withExtendedStatistic(90)
                     .withLabel('TargetResponseTime p90'),
                 targetResponseTimeMetric
-                    .withPeriod(constants.LONG_PERIOD)
+                    .withPeriod(longPeriod)
                     .withExtendedStatistic(99)
                     .withLabel('TargetResponseTime p99'),
             ],
@@ -109,11 +114,11 @@ export default function createWidgets(configs: TargetGroupConfig): Widget[] {
             width: 12,
             height: 6,
             metrics: [
-                requestCountMetric.withPeriod(constants.LONG_PERIOD).withYAxis('right'),
-                httpCodeTarget5xxCountMetric.withPeriod(constants.LONG_PERIOD),
-                httpCodeTarget4xxCountMetric.withPeriod(constants.LONG_PERIOD),
-                httpCodeTarget3xxCountMetric.withPeriod(constants.LONG_PERIOD),
-                httpCodeTarget2xxCountMetric.withPeriod(constants.LONG_PERIOD),
+                requestCountMetric.withPeriod(longPeriod).withYAxis('right'),
+                httpCodeTarget5xxCountMetric.withPeriod(longPeriod),
+                httpCodeTarget4xxCountMetric.withPeriod(longPeriod),
+                httpCodeTarget3xxCountMetric.withPeriod(longPeriod),
+                httpCodeTarget2xxCountMetric.withPeriod(longPeriod),
             ],
         }),
     ];

@@ -9,13 +9,20 @@ export default function createAlarm(
     name: string,
     threshold: number,
     configs: EcsClusterConfig,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
     const { clusterName } = configs;
 
+    const period = extraConfigs?.period || constants.LONG_PERIOD;
+
+    const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+    const datapointsToAlarm =
+        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+    const treatMissingData = extraConfigs?.treatMissingData || constants.TREAT_MISSING_DATA;
+
     const options: pulumi.ResourceOptions = {};
-    if (extraConfigs.parent) {
-        options.parent = extraConfigs.parent;
+    if (extraConfigs?.parent) {
+        options.parent = extraConfigs?.parent;
     }
 
     const storageWriteBytesMetric = new awsx.cloudwatch.Metric({
@@ -24,7 +31,7 @@ export default function createAlarm(
         label: 'StorageWriteBytes',
         dimensions: { ClusterName: clusterName },
         statistic: 'Average',
-        period: constants.LONG_PERIOD,
+        period,
     });
 
     return storageWriteBytesMetric.createAlarm(
@@ -32,9 +39,11 @@ export default function createAlarm(
         {
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,
-            evaluationPeriods: constants.DATAPOINTS,
-            alarmActions: extraConfigs.snsTopicArns,
-            okActions: extraConfigs.snsTopicArns,
+            evaluationPeriods,
+            datapointsToAlarm,
+            treatMissingData,
+            alarmActions: extraConfigs?.snsTopicArns,
+            okActions: extraConfigs?.snsTopicArns,
         },
         options
     );

@@ -8,6 +8,7 @@ import {
     EcsClusterConfig,
     EcsClusterWithAsgConfig,
     WrapperWidgetFactory,
+    WrapperWidgetExtraConfigs,
 } from './types';
 import { asgWidgets, ecsClusterWidgets } from './widget-factories';
 
@@ -28,6 +29,7 @@ export interface EcsClusterDashboardArgs {
     configs: EcsClusterDashboardConfig;
     options?: EcsClusterDashboardOptionKey[];
     defaultOptions?: boolean;
+    extraConfigs?: WrapperWidgetExtraConfigs;
     extraWidgets?: ExtraWidgets;
 }
 
@@ -51,7 +53,7 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
     constructor(name: string, args: EcsClusterDashboardArgs, opts?: pulumi.ResourceOptions) {
         super('contrib:components:EcsClusterDashboard', name, {}, opts);
 
-        const { configs, defaultOptions, options, extraWidgets } = args;
+        const { configs, defaultOptions, options, extraConfigs, extraWidgets } = args;
 
         const computedOptions: EcsClusterDashboardOptionKey[] = [];
         if (defaultOptions) {
@@ -73,7 +75,7 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
         /* eslint-disable security/detect-object-injection */
         widgets.push(
             ...computedOptions
-                .map((option) => EcsClusterDashboard.actionDict[option](configs))
+                .map((option) => EcsClusterDashboard.actionDict[option](configs, extraConfigs))
                 .flat()
         );
         /* eslint-enable security/detect-object-injection */
@@ -83,7 +85,10 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
         this.dashboard = new awsx.cloudwatch.Dashboard(name, { widgets }, { parent: this });
     }
 
-    static createTaskCountWidgets(configs: Record<string, string>): Widget[] {
+    static createTaskCountWidgets(
+        configs: Record<string, string>,
+        extraConfigs?: WrapperWidgetExtraConfigs
+    ): Widget[] {
         const { clusterName, asgName } = configs;
         if (!clusterName) return [];
 
@@ -92,10 +97,13 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
             asgName,
         };
 
-        return ecsClusterWidgets.createTaskCountWidgets(ecsClusterWithAsgConfig);
+        return ecsClusterWidgets.createTaskCountWidgets(ecsClusterWithAsgConfig, extraConfigs);
     }
 
-    static createMemoryAndCpuUtizilationWidgets(configs: Record<string, string>): Widget[] {
+    static createMemoryAndCpuUtizilationWidgets(
+        configs: Record<string, string>,
+        extraConfigs?: WrapperWidgetExtraConfigs
+    ): Widget[] {
         const { clusterName } = configs;
         if (!clusterName) return [];
 
@@ -103,10 +111,13 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
             clusterName,
         };
 
-        return ecsClusterWidgets.createMemoryAndCpuWidgets(ecsClusterConfig);
+        return ecsClusterWidgets.createMemoryAndCpuWidgets(ecsClusterConfig, extraConfigs);
     }
 
-    static createNetworkAndStorageRateWidgets(configs: Record<string, string>): Widget[] {
+    static createNetworkAndStorageRateWidgets(
+        configs: Record<string, string>,
+        extraConfigs?: WrapperWidgetExtraConfigs
+    ): Widget[] {
         const { clusterName } = configs;
         if (!clusterName) return [];
 
@@ -114,10 +125,13 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
             clusterName,
         };
 
-        return ecsClusterWidgets.createNetworkAndStorageRateWidgets(ecsClusterConfig);
+        return ecsClusterWidgets.createNetworkAndStorageRateWidgets(ecsClusterConfig, extraConfigs);
     }
 
-    static createNetworkAndStorageIoBytesWidgets(configs: Record<string, string>): Widget[] {
+    static createNetworkAndStorageIoBytesWidgets(
+        configs: Record<string, string>,
+        extraConfigs?: WrapperWidgetExtraConfigs
+    ): Widget[] {
         const { asgName } = configs;
         if (!asgName) return [];
 
@@ -125,10 +139,13 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
             asgName,
         };
 
-        return asgWidgets.createNetworkAndStorageIoBytesWidgets(asgConfig);
+        return asgWidgets.createNetworkAndStorageIoBytesWidgets(asgConfig, extraConfigs);
     }
 
-    static createNetworkAndStorageIoCountWidgets(configs: Record<string, string>): Widget[] {
+    static createNetworkAndStorageIoCountWidgets(
+        configs: Record<string, string>,
+        extraConfigs?: WrapperWidgetExtraConfigs
+    ): Widget[] {
         const { asgName } = configs;
         if (!asgName) return [];
 
@@ -136,6 +153,6 @@ export default class EcsClusterDashboard extends pulumi.ComponentResource {
             asgName,
         };
 
-        return asgWidgets.createNetworkAndStorageIoCountWidgets(asgConfig);
+        return asgWidgets.createNetworkAndStorageIoCountWidgets(asgConfig, extraConfigs);
     }
 }

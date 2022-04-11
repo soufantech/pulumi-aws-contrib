@@ -9,13 +9,22 @@ export default function createAlarm(
     name: string,
     threshold: number,
     configs: TargetGroupConfig,
-    extraConfigs: AlarmExtraConfigs
+    extraConfigs?: AlarmExtraConfigs
 ): aws.cloudwatch.MetricAlarm {
     const { loadBalancer, targetGroup } = configs;
 
+    const period = extraConfigs?.period || constants.LONG_PERIOD;
+
+    const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.CRITICAL_DATAPOINTS;
+    const datapointsToAlarm =
+        extraConfigs?.datapointsToAlarm ||
+        extraConfigs?.evaluationPeriods ||
+        constants.CRITICAL_DATAPOINTS;
+    const treatMissingData = extraConfigs?.treatMissingData || constants.TREAT_MISSING_DATA;
+
     const options: pulumi.ResourceOptions = {};
-    if (extraConfigs.parent) {
-        options.parent = extraConfigs.parent;
+    if (extraConfigs?.parent) {
+        options.parent = extraConfigs?.parent;
     }
 
     const requestCountMetric = new awsx.cloudwatch.Metric({
@@ -24,7 +33,7 @@ export default function createAlarm(
         label: 'RequestCount',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
         statistic: 'Sum',
-        period: constants.LONG_PERIOD,
+        period,
     });
 
     return requestCountMetric.createAlarm(
@@ -32,9 +41,11 @@ export default function createAlarm(
         {
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
             threshold,
-            evaluationPeriods: 1,
-            alarmActions: extraConfigs.snsTopicArns,
-            okActions: extraConfigs.snsTopicArns,
+            evaluationPeriods,
+            datapointsToAlarm,
+            treatMissingData,
+            alarmActions: extraConfigs?.snsTopicArns,
+            okActions: extraConfigs?.snsTopicArns,
         },
         options
     );

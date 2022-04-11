@@ -2,7 +2,12 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 import { asgAlarm, ecsClusterAlarm } from './alarm-factories';
-import { AsgConfig, EcsClusterConfig, WrapperAlarmFactory } from './types';
+import {
+    AsgConfig,
+    EcsClusterConfig,
+    WrapperAlarmExtraConfigs,
+    WrapperAlarmFactory,
+} from './types';
 
 export type EcsClusterAlarmConfigKey = 'clusterName' | 'asgName';
 
@@ -30,7 +35,7 @@ export type EcsClusterAlarmResult = {
 export interface EcsClusterAlarmArgs {
     configs: EcsClusterAlarmConfig;
     options: EcsClusterAlarmOption;
-    snsTopicArns?: string[];
+    extraConfigs?: WrapperAlarmExtraConfigs;
 }
 
 export type EcsClusterAlarmActionValue = WrapperAlarmFactory;
@@ -55,7 +60,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
     constructor(name: string, args: EcsClusterAlarmArgs, opts?: pulumi.ResourceOptions) {
         super('contrib:components:EcsClusterAlarm', name, {}, opts);
 
-        const { configs, options, snsTopicArns } = args;
+        const { configs, options, extraConfigs } = args;
 
         const alarms: EcsClusterAlarmResult = {};
 
@@ -70,7 +75,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
                 name,
                 threshold,
                 configs,
-                snsTopicArns
+                extraConfigs
             );
 
             if (alarm) {
@@ -86,7 +91,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
         name: string,
         threshold: number,
         configs: Record<string, string>,
-        snsTopicArns?: string[]
+        extraConfigs?: WrapperAlarmExtraConfigs
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { asgName } = configs;
         if (!asgName) return undefined;
@@ -97,7 +102,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
 
         return asgAlarm.createAsgMaxGroupSizeAlarm(name, threshold, asgConfig, {
             parent: this,
-            snsTopicArns,
+            ...extraConfigs,
         });
     }
 
@@ -105,7 +110,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
         name: string,
         threshold: number,
         configs: EcsClusterAlarmConfig,
-        snsTopicArns?: string[]
+        extraConfigs?: WrapperAlarmExtraConfigs
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName } = configs;
         if (!clusterName) return undefined;
@@ -116,7 +121,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
 
         return ecsClusterAlarm.createCpuUtilizationAlarm(name, threshold, ecsClusterConfig, {
             parent: this,
-            snsTopicArns,
+            ...extraConfigs,
         });
     }
 
@@ -124,7 +129,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
         name: string,
         threshold: number,
         configs: Record<string, string>,
-        snsTopicArns?: string[]
+        extraConfigs?: WrapperAlarmExtraConfigs
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName } = configs;
         if (!clusterName) return undefined;
@@ -135,7 +140,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
 
         return ecsClusterAlarm.createMemoryUtilizationAlarm(name, threshold, ecsClusterConfig, {
             parent: this,
-            snsTopicArns,
+            ...extraConfigs,
         });
     }
 
@@ -143,7 +148,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
         name: string,
         threshold: number,
         configs: EcsClusterAlarmConfig,
-        snsTopicArns?: string[]
+        extraConfigs?: WrapperAlarmExtraConfigs
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName } = configs;
         if (!clusterName) return undefined;
@@ -154,7 +159,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
 
         return ecsClusterAlarm.createNetworkRxBytesAlarm(name, threshold, ecsClusterConfig, {
             parent: this,
-            snsTopicArns,
+            ...extraConfigs,
         });
     }
 
@@ -162,7 +167,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
         name: string,
         threshold: number,
         configs: EcsClusterAlarmConfig,
-        snsTopicArns?: string[]
+        extraConfigs?: WrapperAlarmExtraConfigs
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName } = configs;
         if (!clusterName) return undefined;
@@ -173,7 +178,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
 
         return ecsClusterAlarm.createNetworkTxBytesAlarm(name, threshold, ecsClusterConfig, {
             parent: this,
-            snsTopicArns,
+            ...extraConfigs,
         });
     }
 
@@ -181,7 +186,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
         name: string,
         threshold: number,
         configs: EcsClusterAlarmConfig,
-        snsTopicArns?: string[]
+        extraConfigs?: WrapperAlarmExtraConfigs
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName } = configs;
         if (!clusterName) return undefined;
@@ -192,7 +197,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
 
         return ecsClusterAlarm.createStorageReadBytesAlarm(name, threshold, ecsClusterConfig, {
             parent: this,
-            snsTopicArns,
+            ...extraConfigs,
         });
     }
 
@@ -200,7 +205,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
         name: string,
         threshold: number,
         configs: EcsClusterAlarmConfig,
-        snsTopicArns?: string[]
+        extraConfigs?: WrapperAlarmExtraConfigs
     ): aws.cloudwatch.MetricAlarm | undefined {
         const { clusterName } = configs;
         if (!clusterName) return undefined;
@@ -211,7 +216,7 @@ export default class EcsClusterAlarm extends pulumi.ComponentResource {
 
         return ecsClusterAlarm.createStorageWriteBytesAlarm(name, threshold, ecsClusterConfig, {
             parent: this,
-            snsTopicArns,
+            ...extraConfigs,
         });
     }
 }
