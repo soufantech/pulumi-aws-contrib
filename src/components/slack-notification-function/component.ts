@@ -281,10 +281,7 @@ export default class SlackNotificationFunction extends pulumi.ComponentResource 
     private createSnsTopic(name: string, tags?: Record<string, string>): aws.sns.Topic {
         return new aws.sns.Topic(
             name,
-            {
-                kmsMasterKeyId: 'alias/aws/sns',
-                tags,
-            },
+            { tags },
             { parent: this }
         );
     }
