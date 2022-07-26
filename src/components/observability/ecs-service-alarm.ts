@@ -79,7 +79,7 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         /* eslint-disable security/detect-object-injection */
         optionKeys.forEach((optionKey) => {
             const threshold = options[optionKey];
-            if (!threshold) return;
+            if (threshold === undefined) return;
 
             const alarm = this.actionDict[optionKey].bind(this)(
                 name,
@@ -95,6 +95,10 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         /* eslint-disable security/detect-object-injection */
 
         this.alarms = alarms;
+    }
+
+    public getArns() {
+        return Object.values(this.alarms || {}).map((alarm) => alarm.arn);
     }
 
     private createUptimeAlarm(

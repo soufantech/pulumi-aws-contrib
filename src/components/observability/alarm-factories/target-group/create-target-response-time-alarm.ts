@@ -13,38 +13,67 @@ export default function createAlarm(
 ): aws.cloudwatch.MetricAlarm {
     const { loadBalancer, targetGroup } = configs;
 
+    const logicalName = `${name}-target-response-time`;
+
+    const comparisonOperator = 'GreaterThanOrEqualToThreshold';
+    const anomalyDetectionComparisonOperator = 'GreaterThanUpperThreshold';
+    const namespace = 'AWS/ApplicationELB';
+    const metricName = 'TargetResponseTime';
+    const stat = 'Average';
+    const dimensions = { LoadBalancer: loadBalancer, TargetGroup: targetGroup };
+
+    let defaultDatapoints = constants.DATAPOINTS;
+    if (threshold === 0) defaultDatapoints = constants.ANOMALY_DETECTION_DATAPOINTS;
+
     const period = extraConfigs?.period || constants.SHORT_PERIOD;
 
-    const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+    const evaluationPeriods = extraConfigs?.evaluationPeriods || defaultDatapoints;
     const datapointsToAlarm =
-        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || defaultDatapoints;
     const treatMissingData = extraConfigs?.treatMissingData || constants.TREAT_MISSING_DATA;
+    const standardDeviation = extraConfigs?.standardDeviation || constants.STANDARD_DEVIATION;
 
     const options: pulumi.ResourceOptions = {};
     if (extraConfigs?.parent) {
         options.parent = extraConfigs?.parent;
     }
 
-    const targetResponseTimeMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ApplicationELB',
-        name: 'TargetResponseTime',
-        label: 'TargetResponseTime',
-        dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-        statistic: 'Average',
-        period,
-    });
+    const metricQueries: aws.types.input.cloudwatch.MetricAlarmMetricQuery[] = [];
+    const metricArgs: Partial<aws.cloudwatch.MetricAlarmArgs> = {};
 
-    return targetResponseTimeMetric.createAlarm(
-        `${name}-target-response-time`,
+    if (threshold === 0) {
+        metricArgs.thresholdMetricId = 'e1';
+        metricArgs.comparisonOperator = anomalyDetectionComparisonOperator;
+        metricQueries.push({
+            id: 'e1',
+            expression: `ANOMALY_DETECTION_BAND(m1, ${standardDeviation})`,
+            label: `${metricName} (Expected)`,
+            returnData: true,
+        })
+    } else {
+        metricArgs.threshold = threshold;
+    }
+
+    return new aws.cloudwatch.MetricAlarm(
+        logicalName,
         {
-            comparisonOperator: 'GreaterThanOrEqualToThreshold',
-            threshold,
+            comparisonOperator,
             evaluationPeriods,
             datapointsToAlarm,
             treatMissingData,
+            metricQueries: [
+                ...metricQueries,
+                {
+                    id: 'm1',
+                    label: metricName,
+                    metric: { namespace, metricName, dimensions, stat, period },
+                    returnData: true,
+                },
+            ],
             alarmActions: extraConfigs?.snsTopicArns,
             okActions: extraConfigs?.snsTopicArns,
+            ...metricArgs,
         },
-        options
+        options,
     );
 }

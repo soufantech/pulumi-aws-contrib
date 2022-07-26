@@ -12,27 +12,55 @@ export default function createAlarm(
 ): aws.cloudwatch.MetricAlarm {
     const { asgName } = configs;
 
+    const logicalName = `${name}-asg-max-size`;
+
+    const comparisonOperator = 'GreaterThanOrEqualToThreshold';
+    const anomalyDetectionComparisonOperator = 'GreaterThanUpperThreshold';
+    const namespace = 'AWS/AutoScaling';
+    const stat = 'Maximum';
+    const dimensions = { AutoScalingGroupName: asgName };
+
+    let defaultDatapoints = constants.DATAPOINTS;
+    if (threshold === 0) defaultDatapoints = constants.ANOMALY_DETECTION_DATAPOINTS;
+
     const period = extraConfigs?.period || constants.LONG_PERIOD;
 
-    const evaluationPeriods = extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+    const evaluationPeriods = extraConfigs?.evaluationPeriods || defaultDatapoints;
     const datapointsToAlarm =
-        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || constants.DATAPOINTS;
+        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || defaultDatapoints;
     const treatMissingData = extraConfigs?.treatMissingData || constants.TREAT_MISSING_DATA;
+    const standardDeviation = extraConfigs?.standardDeviation || constants.STANDARD_DEVIATION;
 
     const options: pulumi.ResourceOptions = {};
     if (extraConfigs?.parent) {
         options.parent = extraConfigs?.parent;
     }
 
+    const metricQueries: aws.types.input.cloudwatch.MetricAlarmMetricQuery[] = [];
+    const metricArgs: Partial<aws.cloudwatch.MetricAlarmArgs> = {};
+
+    if (threshold === 0) {
+        metricArgs.thresholdMetricId = 'e2';
+        metricArgs.comparisonOperator = anomalyDetectionComparisonOperator;
+        metricQueries.push({
+            id: 'e2',
+            expression: `ANOMALY_DETECTION_BAND(e1, ${standardDeviation})`,
+            label: `AsgMaxSize (Expected)`,
+            returnData: true,
+        })
+    } else {
+        metricArgs.threshold = threshold;
+    }
+
     return new aws.cloudwatch.MetricAlarm(
-        `${name}-asg-max-size`,
+        logicalName,
         {
-            comparisonOperator: 'GreaterThanOrEqualToThreshold',
-            threshold,
+            comparisonOperator,
             evaluationPeriods,
             datapointsToAlarm,
             treatMissingData,
             metricQueries: [
+                ...metricQueries,
                 {
                     id: 'e1',
                     expression: '(m1*100)/m2',
@@ -42,26 +70,27 @@ export default function createAlarm(
                 {
                     id: 'm1',
                     metric: {
-                        namespace: 'AWS/AutoScaling',
+                        namespace,
                         metricName: 'GroupInServiceInstances',
-                        dimensions: { AutoScalingGroupName: asgName },
-                        stat: 'Maximum',
+                        dimensions,
+                        stat,
                         period,
                     },
                 },
                 {
                     id: 'm2',
                     metric: {
-                        namespace: 'AWS/AutoScaling',
+                        namespace,
                         metricName: 'GroupMaxSize',
-                        dimensions: { AutoScalingGroupName: asgName },
-                        stat: 'Maximum',
+                        dimensions,
+                        stat,
                         period,
                     },
                 },
             ],
             alarmActions: extraConfigs?.snsTopicArns,
             okActions: extraConfigs?.snsTopicArns,
+            ...metricArgs,
         },
         options
     );
