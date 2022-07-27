@@ -23,7 +23,6 @@ export type EcsServiceAlarmOptionKey =
     | 'uptime'
     | 'targetResponseTime'
     | 'requestCount'
-    | 'requestSpikeCount'
     | 'cpuUtilization'
     | 'memoryUtilization'
     | 'networkRxBytes'
@@ -58,7 +57,6 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         uptime: this.createUptimeAlarm,
         targetResponseTime: this.createTargetResponseTimeAlarm,
         requestCount: this.createRequestCountAlarm,
-        requestSpikeCount: this.createRequestSpikeCountAlarm,
         cpuUtilization: this.createCpuUtilizationAlarm,
         memoryUtilization: this.createMemoryUtilizationAlarm,
         networkRxBytes: this.createNetworkRxBytesAlarm,
@@ -156,26 +154,6 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         };
 
         return tgAlarm.createRequestCountAlarm(name, threshold, tgConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
-    }
-
-    private createRequestSpikeCountAlarm(
-        name: string,
-        threshold: number,
-        configs: Record<string, string>,
-        extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { loadBalancer, targetGroup } = configs;
-        if (!loadBalancer || !targetGroup) return undefined;
-
-        const tgConfig: TargetGroupConfig = {
-            loadBalancer,
-            targetGroup,
-        };
-
-        return tgAlarm.createRequestSpikeCountAlarm(name, threshold, tgConfig, {
             parent: this,
             ...extraConfigs,
         });

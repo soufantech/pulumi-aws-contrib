@@ -161,7 +161,6 @@ const alarms = new EcsServiceAlarm(resourceName, {
         uptime: 95,
         targetResponseTime: 0.5,
         requestCount: 100000,
-        requestSpikeCount: 200000,
         memoryUtilization: 40,
         cpuUtilization: 5,
         networkTxBytes: 20 * 1024 * 1024 * 1024,
