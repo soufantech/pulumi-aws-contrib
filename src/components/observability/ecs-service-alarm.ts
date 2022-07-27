@@ -2,298 +2,170 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 import { ecsServiceAlarm, tgAlarm } from './alarm-factories';
-import {
-    TargetGroupConfig,
-    EcsServiceConfig,
-    WrapperAlarmFactory,
-    WrapperAlarmExtraConfigs,
-} from './types';
-
-export type EcsServiceAlarmConfigKey =
-    | 'clusterName'
-    | 'serviceName'
-    | 'loadBalancer'
-    | 'targetGroup';
-
-export type EcsServiceAlarmConfig = {
-    [config in EcsServiceAlarmConfigKey]?: string;
-};
-
-export type EcsServiceAlarmOptionKey =
-    | 'uptime'
-    | 'targetResponseTime'
-    | 'requestCount'
-    | 'requestSpikeCount'
-    | 'cpuUtilization'
-    | 'memoryUtilization'
-    | 'networkRxBytes'
-    | 'networkTxBytes'
-    | 'storageReadBytes'
-    | 'storageWriteBytes';
-
-export type EcsServiceAlarmOption = {
-    [option in EcsServiceAlarmOptionKey]?: number;
-};
-
-export type EcsServiceAlarmResult = {
-    [option in EcsServiceAlarmOptionKey]?: aws.cloudwatch.MetricAlarm;
-};
-
-export interface EcsServiceAlarmArgs {
-    configs: EcsServiceAlarmConfig;
-    options: EcsServiceAlarmOption;
-    extraConfigs?: WrapperAlarmExtraConfigs;
-}
-
-export type EcsServiceAlarmActionValue = WrapperAlarmFactory;
-
-export type EcsServiceAlarmActionDict = {
-    [option in EcsServiceAlarmOptionKey]: EcsServiceAlarmActionValue;
-};
+import { TargetGroupConfig, EcsServiceConfig, WrapperAlarmExtraConfigs } from './types';
 
 export default class EcsServiceAlarm extends pulumi.ComponentResource {
-    readonly alarms?: EcsServiceAlarmResult;
+    alarms: aws.cloudwatch.MetricAlarm[];
 
-    readonly actionDict: EcsServiceAlarmActionDict = {
-        uptime: this.createUptimeAlarm,
-        targetResponseTime: this.createTargetResponseTimeAlarm,
-        requestCount: this.createRequestCountAlarm,
-        requestSpikeCount: this.createRequestSpikeCountAlarm,
-        cpuUtilization: this.createCpuUtilizationAlarm,
-        memoryUtilization: this.createMemoryUtilizationAlarm,
-        networkRxBytes: this.createNetworkRxBytesAlarm,
-        networkTxBytes: this.createNetworkTxBytesAlarm,
-        storageReadBytes: this.createStorageReadBytesAlarm,
-        storageWriteBytes: this.createStorageWriteBytesAlarm,
-    };
+    private name: string;
 
-    constructor(name: string, args: EcsServiceAlarmArgs, opts?: pulumi.ResourceOptions) {
+    constructor(name: string, opts?: pulumi.ResourceOptions) {
         super('contrib:components:EcsServiceAlarm', name, {}, opts);
-
-        const { configs, options, extraConfigs } = args;
-
-        const alarms: EcsServiceAlarmResult = {};
-
-        const optionKeys = Object.keys(options) as EcsServiceAlarmOptionKey[];
-
-        /* eslint-disable security/detect-object-injection */
-        optionKeys.forEach((optionKey) => {
-            const threshold = options[optionKey];
-            if (!threshold) return;
-
-            const alarm = this.actionDict[optionKey].bind(this)(
-                name,
-                threshold,
-                configs,
-                extraConfigs
-            );
-
-            if (alarm) {
-                alarms[optionKey] = alarm;
-            }
-        });
-        /* eslint-disable security/detect-object-injection */
-
-        this.alarms = alarms;
+        this.name = name;
+        this.alarms = [];
     }
 
-    private createUptimeAlarm(
-        name: string,
+    uptime(
         threshold: number,
-        configs: Record<string, string>,
+        tgConfig: TargetGroupConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { loadBalancer, targetGroup } = configs;
-        if (!loadBalancer || !targetGroup) return undefined;
+    ): EcsServiceAlarm {
+        this.alarms.push(
+            tgAlarm.createUptimeAlarm(this.name, threshold, tgConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const tgConfig: TargetGroupConfig = {
-            loadBalancer,
-            targetGroup,
-        };
-
-        return tgAlarm.createUptimeAlarm(name, threshold, tgConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createTargetResponseTimeAlarm(
-        name: string,
+    responseTime(
         threshold: number,
-        configs: Record<string, string>,
+        tgConfig: TargetGroupConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { loadBalancer, targetGroup } = configs;
-        if (!loadBalancer || !targetGroup) return undefined;
+    ) {
+        this.alarms.push(
+            tgAlarm.createTargetResponseTimeAlarm(this.name, threshold, tgConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const tgConfig: TargetGroupConfig = {
-            loadBalancer,
-            targetGroup,
-        };
-
-        return tgAlarm.createTargetResponseTimeAlarm(name, threshold, tgConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createRequestCountAlarm(
-        name: string,
+    requestCount(
         threshold: number,
-        configs: Record<string, string>,
+        tgConfig: TargetGroupConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { loadBalancer, targetGroup } = configs;
-        if (!loadBalancer || !targetGroup) return undefined;
+    ) {
+        this.alarms.push(
+            tgAlarm.createRequestCountAlarm(this.name, threshold, tgConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const tgConfig: TargetGroupConfig = {
-            loadBalancer,
-            targetGroup,
-        };
-
-        return tgAlarm.createRequestCountAlarm(name, threshold, tgConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createRequestSpikeCountAlarm(
-        name: string,
+    requestSpikeCount(
         threshold: number,
-        configs: Record<string, string>,
+        tgConfig: TargetGroupConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { loadBalancer, targetGroup } = configs;
-        if (!loadBalancer || !targetGroup) return undefined;
+    ) {
+        this.alarms.push(
+            tgAlarm.createRequestSpikeCountAlarm(this.name, threshold, tgConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const tgConfig: TargetGroupConfig = {
-            loadBalancer,
-            targetGroup,
-        };
-
-        return tgAlarm.createRequestSpikeCountAlarm(name, threshold, tgConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createCpuUtilizationAlarm(
-        name: string,
+    cpuUtilization(
         threshold: number,
-        configs: Record<string, string>,
+        ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { clusterName, serviceName } = configs;
-        if (!clusterName || !serviceName) return undefined;
+    ) {
+        this.alarms.push(
+            ecsServiceAlarm.createCpuUtilizationAlarm(this.name, threshold, ecsServiceConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const ecsServiceConfig: EcsServiceConfig = {
-            clusterName,
-            serviceName,
-        };
-
-        return ecsServiceAlarm.createCpuUtilizationAlarm(name, threshold, ecsServiceConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createMemoryUtilizationAlarm(
-        name: string,
+    memoryUtilization(
         threshold: number,
-        configs: Record<string, string>,
+        ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { clusterName, serviceName } = configs;
-        if (!clusterName || !serviceName) return undefined;
+    ) {
+        this.alarms.push(
+            ecsServiceAlarm.createMemoryUtilizationAlarm(this.name, threshold, ecsServiceConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const ecsServiceConfig: EcsServiceConfig = {
-            clusterName,
-            serviceName,
-        };
-
-        return ecsServiceAlarm.createMemoryUtilizationAlarm(name, threshold, ecsServiceConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createNetworkRxBytesAlarm(
-        name: string,
+    networkRxBytes(
         threshold: number,
-        configs: Record<string, string>,
+        ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { clusterName, serviceName } = configs;
-        if (!clusterName || !serviceName) return undefined;
+    ) {
+        this.alarms.push(
+            ecsServiceAlarm.createNetworkRxBytesAlarm(this.name, threshold, ecsServiceConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const ecsServiceConfig: EcsServiceConfig = {
-            clusterName,
-            serviceName,
-        };
-
-        return ecsServiceAlarm.createNetworkRxBytesAlarm(name, threshold, ecsServiceConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createNetworkTxBytesAlarm(
-        name: string,
+    networkTxBytesAlarm(
         threshold: number,
-        configs: Record<string, string>,
+        ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { clusterName, serviceName } = configs;
-        if (!clusterName || !serviceName) return undefined;
+    ) {
+        this.alarms.push(
+            ecsServiceAlarm.createNetworkTxBytesAlarm(this.name, threshold, ecsServiceConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const ecsServiceConfig: EcsServiceConfig = {
-            clusterName,
-            serviceName,
-        };
-
-        return ecsServiceAlarm.createNetworkTxBytesAlarm(name, threshold, ecsServiceConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createStorageReadBytesAlarm(
-        name: string,
+    storageReadBytes(
         threshold: number,
-        configs: Record<string, string>,
+        ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { clusterName, serviceName } = configs;
-        if (!clusterName || !serviceName) return undefined;
+    ) {
+        this.alarms.push(
+            ecsServiceAlarm.createStorageReadBytesAlarm(this.name, threshold, ecsServiceConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const ecsServiceConfig: EcsServiceConfig = {
-            clusterName,
-            serviceName,
-        };
-
-        return ecsServiceAlarm.createStorageReadBytesAlarm(name, threshold, ecsServiceConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+        return this;
     }
 
-    private createStorageWriteBytesAlarm(
-        name: string,
+    storageWriteBytes(
         threshold: number,
-        configs: Record<string, string>,
+        ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): aws.cloudwatch.MetricAlarm | undefined {
-        const { clusterName, serviceName } = configs;
-        if (!clusterName || !serviceName) return undefined;
+    ) {
+        this.alarms.push(
+            ecsServiceAlarm.createStorageWriteBytesAlarm(this.name, threshold, ecsServiceConfig, {
+                parent: this,
+                ...extraConfigs,
+            })
+        );
 
-        const ecsServiceConfig: EcsServiceConfig = {
-            clusterName,
-            serviceName,
-        };
+        return this;
+    }
 
-        return ecsServiceAlarm.createStorageWriteBytesAlarm(name, threshold, ecsServiceConfig, {
-            parent: this,
-            ...extraConfigs,
-        });
+    getArns() {
+        return this.alarms.map((alarm) => alarm.arn);
     }
 }
