@@ -48,6 +48,7 @@ export interface AlarmExtraConfigs {
     datapointsToAlarm?: number;
     evaluationPeriods?: number;
     treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
+    standardDeviation?: number;
     period?: number;
 }
 
@@ -56,6 +57,7 @@ export interface WrapperAlarmExtraConfigs {
     datapointsToAlarm?: number;
     evaluationPeriods?: number;
     treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
+    standardDeviation?: number;
     period?: number;
 }
 

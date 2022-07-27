@@ -60,21 +60,6 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         return this;
     }
 
-    requestSpikeCount(
-        threshold: number,
-        tgConfig: TargetGroupConfig,
-        extraConfigs?: WrapperAlarmExtraConfigs
-    ) {
-        this.alarms.push(
-            tgAlarm.createRequestSpikeCountAlarm(this.name, threshold, tgConfig, {
-                parent: this,
-                ...extraConfigs,
-            })
-        );
-
-        return this;
-    }
-
     cpuUtilization(
         threshold: number,
         ecsServiceConfig: EcsServiceConfig,
