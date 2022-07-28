@@ -1,28 +1,31 @@
-import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 import { ecsServiceAlarm, tgAlarm } from './alarm-factories';
+import AlarmGroup from './entities/AlarmGroup';
 import { TargetGroupConfig, EcsServiceConfig, WrapperAlarmExtraConfigs } from './types';
 
-export default class EcsServiceAlarm extends pulumi.ComponentResource {
-    alarms: aws.cloudwatch.MetricAlarm[];
+export default class EcsServiceAlarmGroupBuilder {
+    private alarm: AlarmGroup;
 
     private name: string;
 
     constructor(name: string, opts?: pulumi.ResourceOptions) {
-        super('contrib:components:EcsServiceAlarm', name, {}, opts);
         this.name = name;
-        this.alarms = [];
+        this.alarm = new AlarmGroup('contrib:components:EcsServiceDashboard', name, opts);
+    }
+
+    build() {
+        return this.alarm;
     }
 
     uptime(
         threshold: number,
         tgConfig: TargetGroupConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
-    ): EcsServiceAlarm {
-        this.alarms.push(
+    ) {
+        this.alarm.pushAlarm(
             tgAlarm.createUptimeAlarm(this.name, threshold, tgConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -35,9 +38,9 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         tgConfig: TargetGroupConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             tgAlarm.createTargetResponseTimeAlarm(this.name, threshold, tgConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -50,9 +53,9 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         tgConfig: TargetGroupConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             tgAlarm.createRequestCountAlarm(this.name, threshold, tgConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -65,9 +68,9 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             ecsServiceAlarm.createCpuUtilizationAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -80,9 +83,9 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             ecsServiceAlarm.createMemoryUtilizationAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -95,9 +98,9 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             ecsServiceAlarm.createNetworkRxBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -110,9 +113,9 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             ecsServiceAlarm.createNetworkTxBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -125,9 +128,9 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             ecsServiceAlarm.createStorageReadBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
@@ -140,17 +143,13 @@ export default class EcsServiceAlarm extends pulumi.ComponentResource {
         ecsServiceConfig: EcsServiceConfig,
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
-        this.alarms.push(
+        this.alarm.pushAlarm(
             ecsServiceAlarm.createStorageWriteBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this,
+                parent: this.alarm,
                 ...extraConfigs,
             })
         );
 
         return this;
-    }
-
-    getArns() {
-        return this.alarms.map((alarm) => alarm.arn);
     }
 }

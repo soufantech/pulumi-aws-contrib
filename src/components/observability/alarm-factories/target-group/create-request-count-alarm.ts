@@ -48,7 +48,7 @@ export default function createAlarm(
             expression: `ANOMALY_DETECTION_BAND(m1, ${standardDeviation})`,
             label: `${metricName} (Expected)`,
             returnData: true,
-        })
+        });
     } else {
         metricArgs.threshold = threshold;
     }
@@ -73,6 +73,6 @@ export default function createAlarm(
             okActions: extraConfigs?.snsTopicArns,
             ...metricArgs,
         },
-        options,
+        options
     );
 }
