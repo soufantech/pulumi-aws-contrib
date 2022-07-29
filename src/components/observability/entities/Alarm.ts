@@ -12,29 +12,14 @@ interface AlarmConfig {
 }
 
 export default abstract class Alarm {
-    period: number;
-
-    datapointsToAlarm!: number;
-
-    treatMissingData: string;
-
-    standardDeviation: number;
-
-    parent: AlarmExtraConfigs['parent'];
-
     metricQueries: aws.types.input.cloudwatch.MetricAlarmMetricQuery[];
 
     metricArgs: Partial<aws.cloudwatch.MetricAlarmArgs>;
 
-    evaluationPeriods!: number;
-
-    snsTopicArns: string[] | undefined;
-
-    setDataPointsAndEvalPeriod(extraConfigs: AlarmExtraConfigs, defaultValue: number) {
-        this.datapointsToAlarm =
-            extraConfigs.datapointsToAlarm || extraConfigs.evaluationPeriods || defaultValue;
-        this.evaluationPeriods = extraConfigs.evaluationPeriods || defaultValue;
-    }
+    extraConfigs: Required<
+        Omit<AlarmExtraConfigs, 'parent' | 'snsTopicArns' | 'standardDeviation'>
+    > &
+        Pick<AlarmExtraConfigs, 'snsTopicArns' | 'parent' | 'standardDeviation'>;
 
     setComparisonOperator(operator: string) {
         this.alarmConfig.comparisonOperator = operator;
@@ -46,18 +31,21 @@ export default abstract class Alarm {
         protected alarmConfig: AlarmConfig,
         extraConfigs: AlarmExtraConfigs = {}
     ) {
-        this.period = extraConfigs.period || constants.LONG_PERIOD;
-        this.treatMissingData = extraConfigs.treatMissingData || constants.TREAT_MISSING_DATA;
-        this.standardDeviation = extraConfigs.standardDeviation || constants.STANDARD_DEVIATION;
-        this.parent = extraConfigs.parent;
-
-        this.setDataPointsAndEvalPeriod(extraConfigs, constants.DATAPOINTS);
+        this.extraConfigs = {
+            period: extraConfigs.period || constants.LONG_PERIOD,
+            treatMissingData: extraConfigs.treatMissingData || constants.TREAT_MISSING_DATA,
+            snsTopicArns: extraConfigs.snsTopicArns,
+            parent: extraConfigs.parent,
+            datapointsToAlarm:
+                extraConfigs.datapointsToAlarm ||
+                extraConfigs.evaluationPeriods ||
+                constants.DATAPOINTS,
+            evaluationPeriods: extraConfigs.evaluationPeriods || constants.DATAPOINTS,
+        };
 
         this.metricQueries = [];
         this.metricArgs = {};
         this.metricArgs.threshold = threshold;
-
-        this.snsTopicArns = extraConfigs.snsTopicArns;
     }
 
     getValue() {
@@ -65,9 +53,9 @@ export default abstract class Alarm {
             this.name,
             {
                 comparisonOperator: this.alarmConfig.comparisonOperator,
-                evaluationPeriods: this.evaluationPeriods,
-                datapointsToAlarm: this.datapointsToAlarm,
-                treatMissingData: this.treatMissingData,
+                evaluationPeriods: this.extraConfigs.evaluationPeriods,
+                datapointsToAlarm: this.extraConfigs.datapointsToAlarm,
+                treatMissingData: this.extraConfigs.treatMissingData,
                 metricQueries: [
                     ...this.metricQueries,
                     {
@@ -78,17 +66,17 @@ export default abstract class Alarm {
                             metricName: this.alarmConfig.metricName,
                             dimensions: this.alarmConfig.dimensions,
                             stat: this.alarmConfig.statistics,
-                            period: this.period,
+                            period: this.extraConfigs.period,
                         },
                         returnData: true,
                     },
                 ],
-                alarmActions: this.snsTopicArns,
-                okActions: this.snsTopicArns,
+                alarmActions: this.extraConfigs.snsTopicArns,
+                okActions: this.extraConfigs.snsTopicArns,
                 ...this.metricArgs,
             },
             {
-                parent: this.parent,
+                parent: this.extraConfigs.parent,
             }
         );
     }

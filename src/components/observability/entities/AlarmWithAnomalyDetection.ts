@@ -15,17 +15,23 @@ export default class AlarmWithAnomalyDetection extends Alarm {
         this.hasAnomalyDetection = threshold === 0;
 
         if (this.hasAnomalyDetection) {
-            const standardDeviation =
-                extraConfigs?.standardDeviation || constants.STANDARD_DEVIATION;
-            this.setDataPointsAndEvalPeriod(extraConfigs, constants.ANOMALY_DETECTION_DATAPOINTS);
             delete this.metricArgs.threshold;
+            this.extraConfigs.standardDeviation =
+                extraConfigs.standardDeviation || constants.STANDARD_DEVIATION;
+            this.extraConfigs.datapointsToAlarm =
+                extraConfigs.datapointsToAlarm ||
+                extraConfigs.evaluationPeriods ||
+                constants.ANOMALY_DETECTION_DATAPOINTS;
+            this.extraConfigs.evaluationPeriods =
+                extraConfigs.evaluationPeriods || constants.ANOMALY_DETECTION_DATAPOINTS;
             this.metricArgs.thresholdMetricId = 'e1';
             this.metricQueries.push({
                 id: 'e1',
-                expression: `ANOMALY_DETECTION_BAND(m1, ${standardDeviation})`,
+                expression: `ANOMALY_DETECTION_BAND(m1, ${this.extraConfigs.standardDeviation})`,
                 label: `${alarmConfig.metricName} (Expected)`,
                 returnData: true,
             });
+            this.setComparisonOperator('GreaterThanUpperThreshold');
         }
     }
 }
