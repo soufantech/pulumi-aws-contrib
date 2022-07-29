@@ -2,6 +2,7 @@ import * as pulumi from '@pulumi/pulumi';
 
 import { ecsServiceAlarm } from './alarm-factories';
 import AlarmGroup from './entities/alarm-group';
+import EcsStorageBytesAlarm from './entities/ecs-storage-bytes-alarm';
 import TgRequestCountAlarm from './entities/tg-request-count-alarm';
 import TgResponseTimeAlarm from './entities/tg-response-time-alarm';
 import TgUptimeAlarm from './entities/tg-upltime-alarm';
@@ -172,15 +173,16 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createStorageReadBytesAlarm(
+            new EcsStorageBytesAlarm(
                 getNameWithSuffix(this.name, extraConfigs?.suffix),
                 threshold,
                 ecsServiceConfig,
                 {
                     parent: this.alarm,
                     ...extraConfigs,
-                }
-            )
+                },
+                'read'
+            ).getValue()
         );
 
         return this;
@@ -192,15 +194,16 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createStorageWriteBytesAlarm(
+            new EcsStorageBytesAlarm(
                 getNameWithSuffix(this.name, extraConfigs?.suffix),
                 threshold,
                 ecsServiceConfig,
                 {
                     parent: this.alarm,
                     ...extraConfigs,
-                }
-            )
+                },
+                'write'
+            ).getValue()
         );
 
         return this;
