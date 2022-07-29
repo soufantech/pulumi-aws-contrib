@@ -1,15 +1,15 @@
 import { AlarmExtraConfigs, TargetGroupConfig } from '../types';
 import AlarmWithAnomalyDetection from './alarm-with-anomaly-detection';
 
-export default class TgRequestCountAlarm extends AlarmWithAnomalyDetection {
+export default class TgResponseTimeAlarm extends AlarmWithAnomalyDetection {
     constructor(
         name: string,
         threshold: number,
         { loadBalancer, targetGroup }: TargetGroupConfig,
-        extraConfigs: AlarmExtraConfigs
+        extraConfigs: AlarmExtraConfigs = {}
     ) {
         super(
-            `${name}-request-count`,
+            `${name}-target-response-time`,
             threshold,
             {
                 comparisonOperator: 'GreaterThanOrEqualToThreshold',
@@ -17,14 +17,13 @@ export default class TgRequestCountAlarm extends AlarmWithAnomalyDetection {
                     LoadBalancer: loadBalancer,
                     TargetGroup: targetGroup,
                 },
-                metricName: 'RequestCount',
-                statistics: 'Sum',
+                metricName: 'TargetResponseTime',
+                statistics: 'Average',
                 namespace: 'AWS/ApplicationELB',
-                isShortPeriod: false,
+                isShortPeriod: true,
             },
             extraConfigs,
             {
-                expressionId: 'e1',
                 standardDeviation: extraConfigs.standardDeviation,
                 anomalyComparison: 'GreaterThanUpperThreshold',
             }

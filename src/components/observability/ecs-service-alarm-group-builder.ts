@@ -1,7 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 
-import { ecsServiceAlarm, tgAlarm } from './alarm-factories';
+import { ecsServiceAlarm } from './alarm-factories';
 import AlarmGroup from './entities/alarm-group';
+import TgRequestCountAlarm from './entities/tg-request-count-alarm';
+import TgResponseTimeAlarm from './entities/tg-response-time-alarm';
+import TgUptimeAlarm from './entities/tg-upltime-alarm';
 import { TargetGroupConfig, EcsServiceConfig, WrapperAlarmExtraConfigs } from './types';
 
 function getNameWithSuffix(name: string, suffix?: string) {
@@ -29,7 +32,7 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            tgAlarm.createUptimeAlarm(
+            new TgUptimeAlarm(
                 getNameWithSuffix(this.name, extraConfigs?.suffix),
                 threshold,
                 tgConfig,
@@ -37,7 +40,7 @@ export default class EcsServiceAlarmGroupBuilder {
                     parent: this.alarm,
                     ...extraConfigs,
                 }
-            )
+            ).getValue()
         );
 
         return this;
@@ -49,7 +52,7 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            tgAlarm.createTargetResponseTimeAlarm(
+            new TgResponseTimeAlarm(
                 getNameWithSuffix(this.name, extraConfigs?.suffix),
                 threshold,
                 tgConfig,
@@ -57,7 +60,7 @@ export default class EcsServiceAlarmGroupBuilder {
                     parent: this.alarm,
                     ...extraConfigs,
                 }
-            )
+            ).getValue()
         );
 
         return this;
@@ -69,7 +72,7 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            tgAlarm.createRequestCountAlarm(
+            new TgRequestCountAlarm(
                 getNameWithSuffix(this.name, extraConfigs?.suffix),
                 threshold,
                 tgConfig,
@@ -77,7 +80,7 @@ export default class EcsServiceAlarmGroupBuilder {
                     parent: this.alarm,
                     ...extraConfigs,
                 }
-            )
+            ).getValue()
         );
 
         return this;

@@ -5,6 +5,7 @@ import { AlarmExtraConfigs } from '../types';
 
 interface AlarmConfig {
     metricName: string;
+    isShortPeriod: boolean;
     namespace: string;
     statistics: string;
     dimensions: Record<string, string>;
@@ -19,7 +20,7 @@ export default abstract class Alarm {
     extraConfigs: Required<
         Omit<AlarmExtraConfigs, 'parent' | 'snsTopicArns' | 'standardDeviation'>
     > &
-        Pick<AlarmExtraConfigs, 'snsTopicArns' | 'parent' | 'standardDeviation'>;
+        Pick<AlarmExtraConfigs, 'snsTopicArns' | 'parent'>;
 
     setComparisonOperator(operator: string) {
         this.alarmConfig.comparisonOperator = operator;
@@ -32,7 +33,9 @@ export default abstract class Alarm {
         extraConfigs: AlarmExtraConfigs = {}
     ) {
         this.extraConfigs = {
-            period: extraConfigs.period || constants.LONG_PERIOD,
+            period:
+                extraConfigs.period ||
+                (this.alarmConfig.isShortPeriod ? constants.SHORT_PERIOD : constants.LONG_PERIOD),
             treatMissingData: extraConfigs.treatMissingData || constants.TREAT_MISSING_DATA,
             snsTopicArns: extraConfigs.snsTopicArns,
             parent: extraConfigs.parent,
