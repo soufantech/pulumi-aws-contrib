@@ -46,7 +46,20 @@ export default abstract class Alarm {
             evaluationPeriods: extraConfigs.evaluationPeriods || constants.DATAPOINTS,
         };
 
-        this.metricQueries = [];
+        this.metricQueries = [
+            {
+                id: 'm1',
+                label: this.alarmConfig.metricName,
+                metric: {
+                    namespace: this.alarmConfig.namespace,
+                    metricName: this.alarmConfig.metricName,
+                    dimensions: this.alarmConfig.dimensions,
+                    stat: this.alarmConfig.statistics,
+                    period: this.extraConfigs.period,
+                },
+                returnData: true,
+            },
+        ];
         this.metricArgs = {};
         this.metricArgs.threshold = threshold;
     }
@@ -59,21 +72,7 @@ export default abstract class Alarm {
                 evaluationPeriods: this.extraConfigs.evaluationPeriods,
                 datapointsToAlarm: this.extraConfigs.datapointsToAlarm,
                 treatMissingData: this.extraConfigs.treatMissingData,
-                metricQueries: [
-                    ...this.metricQueries,
-                    {
-                        id: 'm1',
-                        label: this.alarmConfig.metricName,
-                        metric: {
-                            namespace: this.alarmConfig.namespace,
-                            metricName: this.alarmConfig.metricName,
-                            dimensions: this.alarmConfig.dimensions,
-                            stat: this.alarmConfig.statistics,
-                            period: this.extraConfigs.period,
-                        },
-                        returnData: true,
-                    },
-                ],
+                metricQueries: this.metricQueries,
                 alarmActions: this.extraConfigs.snsTopicArns,
                 okActions: this.extraConfigs.snsTopicArns,
                 ...this.metricArgs,

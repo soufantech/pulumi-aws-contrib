@@ -23,10 +23,12 @@ export default class AlarmWithAnomalyDetection extends Alarm {
 
         if (this.hasAnomalyDetection) {
             delete this.metricArgs.threshold;
+
             const standardDeviation =
                 anomalyDetectionConfig.standardDeviation || constants.STANDARD_DEVIATION;
             const expressionId = anomalyDetectionConfig.expressionId || 'e1';
             const metricToWatchId = anomalyDetectionConfig.metricToWatchId || 'm1';
+
             this.extraConfigs.datapointsToAlarm =
                 extraConfigs.datapointsToAlarm ||
                 extraConfigs.evaluationPeriods ||
@@ -34,12 +36,14 @@ export default class AlarmWithAnomalyDetection extends Alarm {
             this.extraConfigs.evaluationPeriods =
                 extraConfigs.evaluationPeriods || constants.ANOMALY_DETECTION_DATAPOINTS;
             this.metricArgs.thresholdMetricId = expressionId;
+
             this.metricQueries.push({
                 id: expressionId,
                 expression: `ANOMALY_DETECTION_BAND(${metricToWatchId}, ${standardDeviation})`,
                 label: `${alarmConfig.metricName} (Expected)`,
                 returnData: true,
             });
+
             this.setComparisonOperator(anomalyDetectionConfig.anomalyComparison);
         }
     }
