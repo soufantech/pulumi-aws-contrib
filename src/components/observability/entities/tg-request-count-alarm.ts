@@ -1,5 +1,5 @@
 import { AlarmExtraConfigs, TargetGroupConfig } from '../types';
-import AlarmWithAnomalyDetection from './AlarmWithAnomalyDetection';
+import AlarmWithAnomalyDetection from './alarm-with-anomaly-detection';
 
 export default class TgRequestCountAlarm extends AlarmWithAnomalyDetection {
     constructor(

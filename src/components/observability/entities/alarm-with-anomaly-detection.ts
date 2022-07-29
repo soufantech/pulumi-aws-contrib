@@ -1,6 +1,6 @@
 import * as constants from '../constants';
 import { AlarmExtraConfigs } from '../types';
-import Alarm from './Alarm';
+import Alarm from './alarm';
 
 export default class AlarmWithAnomalyDetection extends Alarm {
     hasAnomalyDetection: boolean;

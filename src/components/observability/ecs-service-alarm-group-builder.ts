@@ -1,7 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
 
 import { ecsServiceAlarm, tgAlarm } from './alarm-factories';
-import AlarmGroup from './entities/AlarmGroup';
+import AlarmGroup from './entities/alarm-group';
 import { TargetGroupConfig, EcsServiceConfig, WrapperAlarmExtraConfigs } from './types';
 
 function getNameWithSuffix(name: string, suffix?: string) {

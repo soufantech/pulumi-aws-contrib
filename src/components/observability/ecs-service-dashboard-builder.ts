@@ -2,7 +2,7 @@
 import { Widget } from '@pulumi/awsx/cloudwatch';
 import * as pulumi from '@pulumi/pulumi';
 
-import Dashboard from './entities/Dashboard';
+import Dashboard from './entities/dashboard';
 import {
     TargetGroupConfig,
     EcsServiceConfig,
