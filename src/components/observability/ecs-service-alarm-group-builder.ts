@@ -4,6 +4,11 @@ import { ecsServiceAlarm, tgAlarm } from './alarm-factories';
 import AlarmGroup from './entities/AlarmGroup';
 import { TargetGroupConfig, EcsServiceConfig, WrapperAlarmExtraConfigs } from './types';
 
+function getNameWithSuffix(name: string, suffix?: string) {
+    if (!suffix) return name;
+    return `${name}-${suffix}`;
+}
+
 export default class EcsServiceAlarmGroupBuilder {
     private alarm: AlarmGroup;
 
@@ -24,10 +29,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            tgAlarm.createUptimeAlarm(this.name, threshold, tgConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            tgAlarm.createUptimeAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                tgConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -39,10 +49,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            tgAlarm.createTargetResponseTimeAlarm(this.name, threshold, tgConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            tgAlarm.createTargetResponseTimeAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                tgConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -54,10 +69,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            tgAlarm.createRequestCountAlarm(this.name, threshold, tgConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            tgAlarm.createRequestCountAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                tgConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -69,10 +89,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createCpuUtilizationAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            ecsServiceAlarm.createCpuUtilizationAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                ecsServiceConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -84,10 +109,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createMemoryUtilizationAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            ecsServiceAlarm.createMemoryUtilizationAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                ecsServiceConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -99,10 +129,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createNetworkRxBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            ecsServiceAlarm.createNetworkRxBytesAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                ecsServiceConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -114,10 +149,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createNetworkTxBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            ecsServiceAlarm.createNetworkTxBytesAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                ecsServiceConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -129,10 +169,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createStorageReadBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            ecsServiceAlarm.createStorageReadBytesAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                ecsServiceConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;
@@ -144,10 +189,15 @@ export default class EcsServiceAlarmGroupBuilder {
         extraConfigs?: WrapperAlarmExtraConfigs
     ) {
         this.alarm.pushAlarm(
-            ecsServiceAlarm.createStorageWriteBytesAlarm(this.name, threshold, ecsServiceConfig, {
-                parent: this.alarm,
-                ...extraConfigs,
-            })
+            ecsServiceAlarm.createStorageWriteBytesAlarm(
+                getNameWithSuffix(this.name, extraConfigs?.suffix),
+                threshold,
+                ecsServiceConfig,
+                {
+                    parent: this.alarm,
+                    ...extraConfigs,
+                }
+            )
         );
 
         return this;

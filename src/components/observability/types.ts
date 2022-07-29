@@ -52,13 +52,8 @@ export interface AlarmExtraConfigs {
     period?: number;
 }
 
-export interface WrapperAlarmExtraConfigs {
-    snsTopicArns?: string[];
-    datapointsToAlarm?: number;
-    evaluationPeriods?: number;
-    treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
-    standardDeviation?: number;
-    period?: number;
+export interface WrapperAlarmExtraConfigs extends Omit<AlarmExtraConfigs, 'parent'> {
+    suffix?: string;
 }
 
 export interface WidgetExtraConfigs {
