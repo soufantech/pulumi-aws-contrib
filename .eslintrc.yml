@@ -9,12 +9,12 @@ extends:
   - plugin:@typescript-eslint/recommended
   - plugin:sonarjs/recommended
   - plugin:security/recommended
-parser: '@typescript-eslint/parser'
+parser: "@typescript-eslint/parser"
 parserOptions:
   ecmaVersion: latest
   sourceType: module
 plugins:
-  - '@typescript-eslint'
+  - "@typescript-eslint"
   - prettier
   - eslint-plugin-import-helpers
   - sonarjs
@@ -36,14 +36,14 @@ rules:
       printWidth: 100
   import-helpers/order-imports:
     - warn
-    - newlinesBetween: 'always'
+    - newlinesBetween: "always"
       groups:
-        - 'module'
-        - '/^@pulumi/'
-        - '/^@soufantech/'
-        - ['parent', 'sibling', 'index']
+        - "module"
+        - "/^@pulumi/"
+        - "/^@soufantech/"
+        - ["parent", "sibling", "index"]
       alphabetize:
-        order: 'asc'
+        order: "asc"
         ignoreCase: true
   import/extensions:
     - error
@@ -57,4 +57,4 @@ overrides:
       - src/**/*.test.js
     rules:
       sonarjs/no-duplicate-string: off
-
+      no-useless-constructor: off

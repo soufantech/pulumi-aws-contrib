@@ -20,7 +20,7 @@ export { default as EcsClusterDashboard } from './ecs-cluster-dashboard';
 export { default as EcsServiceAlarm } from './ecs-service-alarm';
 export { default as EcsServiceDashboard } from './ecs-service-dashboard';
 
-export * from './alarm-factories';
+export * from './alarm-commands';
 export * from './widget-factories';
 
 export * as observabilityConstants from './constants';

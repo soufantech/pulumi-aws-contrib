@@ -43,13 +43,13 @@ export interface ExtraWidgets {
 }
 
 export interface AlarmExtraConfigs {
-    parent?: pulumi.Resource;
     snsTopicArns?: string[];
     datapointsToAlarm?: number;
     evaluationPeriods?: number;
     treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
     standardDeviation?: number;
     period?: number;
+    suffix?: string;
 }
 
 export interface WrapperAlarmExtraConfigs {

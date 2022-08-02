@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-import { asgAlarm, ecsClusterAlarm } from './alarm-factories';
+import { asgAlarm, ecsClusterAlarm } from './alarm-commands';
 import {
     AsgConfig,
     EcsClusterConfig,

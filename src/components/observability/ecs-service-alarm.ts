@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-import { ecsServiceAlarm, tgAlarm } from './alarm-factories';
+import { ecsServiceAlarm, tgAlarm } from './alarm-commands';
 import { TargetGroupConfig, EcsServiceConfig, WrapperAlarmExtraConfigs } from './types';
 
 export default class EcsServiceAlarm extends pulumi.ComponentResource {
