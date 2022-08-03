@@ -1,6 +1,7 @@
 import { MetricAlarm } from '@pulumi/aws/cloudwatch';
-import { Resource } from '@pulumi/pulumi';
+
+import AlarmStore from '../resources/alarm-store';
 
 export interface CreateAlarmCommand {
-    execute(parent?: Resource): MetricAlarm;
+    execute(parent?: AlarmStore): MetricAlarm;
 }

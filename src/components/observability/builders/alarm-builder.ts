@@ -54,7 +54,7 @@ export default class AlarmBuilder {
         return this;
     }
 
-    short() {
+    isShortPeriod() {
         this.isShort = true;
         return this;
     }
@@ -122,7 +122,7 @@ export default class AlarmBuilder {
         return this;
     }
 
-    anomalyDetection(custom: AnomalyDetectionDTO) {
+    hasAnomalyDetection(custom: AnomalyDetectionDTO) {
         this.isAnomaly = true;
         delete this.args.threshold;
         this.comparisonOperator(custom.anomalyComparison);

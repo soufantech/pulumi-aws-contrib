@@ -1,7 +1,6 @@
-import { Resource } from '@pulumi/pulumi';
-
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
+import AlarmStore from '../../resources/alarm-store';
 import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
 
 export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
@@ -13,7 +12,7 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
         readonly extraConfigs?: AlarmExtraConfigs
     ) { }
 
-    execute(parent?: Resource) {
+    execute(parent?: AlarmStore) {
         const { loadBalancer, targetGroup } = this.configs;
 
         const logicalName = `${this.name}-uptime`;
@@ -23,7 +22,7 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
-            .short()
+            .isShortPeriod()
             .comparisonOperator('LessThanOrEqualToThreshold')
             .evaluationPeriods(this.extraConfigs?.evaluationPeriods)
             .dataPointsToAlarm(this.extraConfigs?.datapointsToAlarm)
@@ -54,7 +53,7 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
             });
 
         if (this.threshold === 0) {
-            alarmBuilder.anomalyDetection({
+            alarmBuilder.hasAnomalyDetection({
                 thresholdMetricId: 'e2',
                 anomalyComparison: 'LessThanLowerThreshold',
                 metricToWatchId: 'e1',
