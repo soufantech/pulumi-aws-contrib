@@ -35,6 +35,7 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
                 dimensions,
                 metricName: 'RequestCount',
                 namespace,
+                period: this.extraConfigs?.period,
                 returnData: false,
             })
             .addMetric({
@@ -43,6 +44,7 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
                 metricName: 'HTTPCode_ELB_5XX_Count',
                 dimensions,
                 stat,
+                period: this.extraConfigs?.period,
                 returnData: false,
             })
             .addExpression({

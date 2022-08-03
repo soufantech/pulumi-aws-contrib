@@ -1,6 +1,5 @@
 import aws from '@pulumi/aws';
 import { Widget } from '@pulumi/awsx/cloudwatch';
-import pulumi from '@pulumi/pulumi';
 
 export type ValueOf<T> = T[keyof T];
 
