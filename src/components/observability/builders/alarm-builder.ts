@@ -3,7 +3,7 @@ import { Resource } from '@pulumi/pulumi';
 
 import * as constants from '../constants';
 
-type AddMetricDTO = {
+type AddMetricDto = {
     id: string;
     stat: string;
     metricName: string;
@@ -13,14 +13,14 @@ type AddMetricDTO = {
     dimensions: Record<string, string>;
 };
 
-type addExpressionDTO = {
+type AddExpressionDto = {
     id: string;
     expression: string;
     label: string;
     returnData: boolean;
 };
 
-type AnomalyDetectionDTO = {
+type AnomalyDetectionDto = {
     thresholdMetricId: string;
     metricToWatchId: string;
     standardDeviation?: number;
@@ -84,7 +84,7 @@ export default class AlarmBuilder {
         return this;
     }
 
-    addMetric(metric: AddMetricDTO) {
+    addMetric(metric: AddMetricDto) {
         this.metricQueries.push({
             id: metric.id,
             label: metric.metricName,
@@ -102,7 +102,7 @@ export default class AlarmBuilder {
         return this;
     }
 
-    addExpression(metric: addExpressionDTO) {
+    addExpression(metric: AddExpressionDto) {
         this.metricQueries.push({
             id: metric.id,
             label: metric.label,
@@ -122,7 +122,7 @@ export default class AlarmBuilder {
         return this;
     }
 
-    setAnomalyDetection(custom: AnomalyDetectionDTO) {
+    setAnomalyDetection(custom: AnomalyDetectionDto) {
         this.isAnomaly = true;
         delete this.args.threshold;
         this.thresholdMetricId(custom.thresholdMetricId);
