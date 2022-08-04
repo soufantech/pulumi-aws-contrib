@@ -28,7 +28,7 @@ export class CreateTargetResponseTimeAlarmCommand extends CreateAlarmCommand {
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
             .threshold(this.threshold)
-            .isShortPeriod()
+            .shortPeriod()
             .comparisonOperator(comparisonOperator)
             .evaluationPeriods(this.extraConfigs?.evaluationPeriods)
             .dataPointsToAlarm(this.extraConfigs?.datapointsToAlarm)

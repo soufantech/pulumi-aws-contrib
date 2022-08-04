@@ -54,7 +54,7 @@ export default class AlarmBuilder {
         return this;
     }
 
-    isShortPeriod() {
+    shortPeriod() {
         this.isShort = true;
         return this;
     }
