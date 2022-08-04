@@ -3,14 +3,13 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { AlarmExtraConfigs, AsgConfig } from '../../types';
 
-export default class CreateAsgMaxSizeAlarmCommand implements CreateAlarmCommand {
-    // eslint-disable-next-line no-useless-constructor
+export class CreateAsgMaxSizeAlarmCommand implements CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: AsgConfig,
         readonly extraConfigs?: AlarmExtraConfigs
-    ) { }
+    ) {}
 
     execute(parent?: AlarmStore) {
         const { asgName } = this.configs;
@@ -23,6 +22,7 @@ export default class CreateAsgMaxSizeAlarmCommand implements CreateAlarmCommand 
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
+            .threshold(this.threshold)
             .comparisonOperator(comparisonOperator)
             .evaluationPeriods(this.extraConfigs?.evaluationPeriods)
             .dataPointsToAlarm(this.extraConfigs?.datapointsToAlarm)

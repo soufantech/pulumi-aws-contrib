@@ -1,4 +1,4 @@
-export { default as CreateCpuUtilizationAlarmCommand } from './create-cpu-utilization-alarm';
-export { default as CreateMemoryUtilizationAlarmCommand } from './create-memory-utilization-alarm';
-export { default as CreateNetworkBytesAlarmCommand } from './create-network-bytes-alarm';
-export { default as CreateStorageBytesAlarmCommand } from './create-storage-bytes-alarm';
+export { CreateCpuUtilizationAlarmCommand } from './create-cpu-utilization-alarm';
+export { CreateMemoryUtilizationAlarmCommand } from './create-memory-utilization-alarm';
+export { CreateNetworkBytesAlarmCommand } from './create-network-bytes-alarm';
+export { CreateStorageBytesAlarmCommand } from './create-storage-bytes-alarm';

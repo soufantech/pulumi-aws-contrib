@@ -27,6 +27,8 @@ globals:
   Atomics: readonly
   SharedArrayBuffer: readonly
 rules:
+  import/prefer-default-export: off
+  no-useless-constructor: off
   prettier/prettier:
     - error
     - singleQuote: true
@@ -57,4 +59,3 @@ overrides:
       - src/**/*.test.js
     rules:
       sonarjs/no-duplicate-string: off
-      no-useless-constructor: off

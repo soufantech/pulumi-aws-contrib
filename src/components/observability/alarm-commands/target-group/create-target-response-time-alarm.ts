@@ -3,14 +3,13 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
 
-export default class CreateTargetResponseTimeAlarmCommand implements CreateAlarmCommand {
-    // eslint-disable-next-line no-useless-constructor
+export class CreateTargetResponseTimeAlarmCommand implements CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: TargetGroupConfig,
         readonly extraConfigs?: AlarmExtraConfigs
-    ) { }
+    ) {}
 
     execute(parent?: AlarmStore) {
         const { loadBalancer, targetGroup } = this.configs;
@@ -26,6 +25,7 @@ export default class CreateTargetResponseTimeAlarmCommand implements CreateAlarm
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
+            .threshold(this.threshold)
             .isShortPeriod()
             .comparisonOperator(comparisonOperator)
             .evaluationPeriods(this.extraConfigs?.evaluationPeriods)

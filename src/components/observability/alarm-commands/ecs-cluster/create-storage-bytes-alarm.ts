@@ -3,15 +3,14 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { AlarmExtraConfigs, EcsClusterConfig } from '../../types';
 
-export default class CreateStorageBytesAlarmCommand implements CreateAlarmCommand {
-    // eslint-disable-next-line no-useless-constructor
+export class CreateStorageBytesAlarmCommand implements CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: EcsClusterConfig,
         readonly extraConfigs: AlarmExtraConfigs = {},
         readonly input: 'write' | 'read'
-    ) { }
+    ) {}
 
     execute(parent?: AlarmStore) {
         const { clusterName } = this.configs;
@@ -27,6 +26,7 @@ export default class CreateStorageBytesAlarmCommand implements CreateAlarmComman
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
+            .threshold(this.threshold)
             .comparisonOperator(comparisonOperator)
             .evaluationPeriods(this.extraConfigs?.evaluationPeriods)
             .dataPointsToAlarm(this.extraConfigs?.datapointsToAlarm)
