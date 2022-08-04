@@ -8,7 +8,7 @@ export class CreateStorageBytesAlarmCommand extends CreateAlarmCommand {
         readonly name: string,
         readonly threshold: number,
         readonly configs: EcsServiceConfig,
-        readonly extraConfigs: AlarmExtraConfigs = {},
+        readonly extraConfigs: AlarmExtraConfigs,
         readonly input: 'write' | 'read'
     ) {
         super();
