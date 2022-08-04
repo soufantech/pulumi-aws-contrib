@@ -1,78 +1,56 @@
-import * as aws from '@pulumi/aws';
-import * as pulumi from '@pulumi/pulumi';
+import AlarmBuilder from '../../builders/alarm-builder';
+import { CreateAlarmCommand } from '../../commands/create-alarm-command';
+import AlarmStore from '../../resources/alarm-store';
+import { AlarmExtraConfigs, EcsServiceConfig } from '../../types';
 
-import * as constants from '../../constants';
-import { EcsServiceConfig, AlarmExtraConfigs } from '../../types';
+export default class CreateRequestCountAlarmCommand implements CreateAlarmCommand {
+    // eslint-disable-next-line no-useless-constructor
+    constructor(
+        readonly name: string,
+        readonly threshold: number,
+        readonly configs: EcsServiceConfig,
+        readonly extraConfigs?: AlarmExtraConfigs
+    ) { }
 
-export default function createAlarm(
-    name: string,
-    threshold: number,
-    configs: EcsServiceConfig,
-    extraConfigs?: AlarmExtraConfigs
-): aws.cloudwatch.MetricAlarm {
-    const { clusterName, serviceName } = configs;
+    execute(parent?: AlarmStore) {
+        const { clusterName, serviceName } = this.configs;
 
-    const logicalName = `${name}-memory-utilization`;
+        const logicalName = `${this.name}-memory-utilization`;
 
-    const comparisonOperator = 'GreaterThanOrEqualToThreshold';
-    const anomalyDetectionComparisonOperator = 'GreaterThanUpperThreshold';
-    const namespace = 'AWS/ECS';
-    const metricName = 'MemoryUtilization';
-    const stat = 'Average';
-    const dimensions = { ClusterName: clusterName, ServiceName: serviceName };
+        const comparisonOperator = 'GreaterThanOrEqualToThreshold';
+        const anomalyDetectionComparisonOperator = 'GreaterThanUpperThreshold';
+        const namespace = 'AWS/ECS';
+        const metricName = 'MemoryUtilization';
+        const stat = 'Average';
+        const dimensions = { ClusterName: clusterName, ServiceName: serviceName };
 
-    let defaultDatapoints = constants.DATAPOINTS;
-    if (threshold === 0) defaultDatapoints = constants.ANOMALY_DETECTION_DATAPOINTS;
+        const alarmBuilder = new AlarmBuilder()
+            .name(logicalName, this.extraConfigs?.suffix)
+            .comparisonOperator(comparisonOperator)
+            .evaluationPeriods(this.extraConfigs?.evaluationPeriods)
+            .dataPointsToAlarm(this.extraConfigs?.datapointsToAlarm)
+            .treatMissingData(this.extraConfigs?.treatMissingData)
+            .snsTopicArns(this.extraConfigs?.snsTopicArns)
+            .setParent(parent)
+            .addMetric({
+                id: 'm1',
+                stat,
+                dimensions,
+                metricName,
+                namespace,
+                period: this.extraConfigs?.period,
+                returnData: true,
+            });
 
-    const period = extraConfigs?.period || constants.LONG_PERIOD;
+        if (this.threshold === 0) {
+            alarmBuilder.hasAnomalyDetection({
+                thresholdMetricId: 'e1',
+                anomalyComparison: anomalyDetectionComparisonOperator,
+                metricToWatchId: 'm1',
+                label: metricName,
+            });
+        }
 
-    const evaluationPeriods = extraConfigs?.evaluationPeriods || defaultDatapoints;
-    const datapointsToAlarm =
-        extraConfigs?.datapointsToAlarm || extraConfigs?.evaluationPeriods || defaultDatapoints;
-    const treatMissingData = extraConfigs?.treatMissingData || constants.TREAT_MISSING_DATA;
-    const standardDeviation = extraConfigs?.standardDeviation || constants.STANDARD_DEVIATION;
-
-    const options: pulumi.ResourceOptions = {};
-    if (extraConfigs?.parent) {
-        options.parent = extraConfigs?.parent;
+        return alarmBuilder.build();
     }
-
-    const metricQueries: aws.types.input.cloudwatch.MetricAlarmMetricQuery[] = [];
-    const metricArgs: Partial<aws.cloudwatch.MetricAlarmArgs> = {};
-
-    if (threshold === 0) {
-        metricArgs.thresholdMetricId = 'e1';
-        metricArgs.comparisonOperator = anomalyDetectionComparisonOperator;
-        metricQueries.push({
-            id: 'e1',
-            expression: `ANOMALY_DETECTION_BAND(m1, ${standardDeviation})`,
-            label: `${metricName} (Expected)`,
-            returnData: true,
-        })
-    } else {
-        metricArgs.threshold = threshold;
-    }
-
-    return new aws.cloudwatch.MetricAlarm(
-        logicalName,
-        {
-            comparisonOperator,
-            evaluationPeriods,
-            datapointsToAlarm,
-            treatMissingData,
-            metricQueries: [
-                ...metricQueries,
-                {
-                    id: 'm1',
-                    label: metricName,
-                    metric: { namespace, metricName, dimensions, stat, period },
-                    returnData: true,
-                },
-            ],
-            alarmActions: extraConfigs?.snsTopicArns,
-            okActions: extraConfigs?.snsTopicArns,
-            ...metricArgs,
-        },
-        options,
-    );
 }
