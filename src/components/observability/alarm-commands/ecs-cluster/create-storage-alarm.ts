@@ -3,24 +3,25 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { AlarmExtraConfigs, EcsClusterConfig } from '../../types';
 
-export default class CreateRequestCountAlarmCommand implements CreateAlarmCommand {
+export default class CreateStorageAlarmCommand implements CreateAlarmCommand {
     // eslint-disable-next-line no-useless-constructor
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: EcsClusterConfig,
-        readonly extraConfigs?: AlarmExtraConfigs
+        readonly extraConfigs: AlarmExtraConfigs = {},
+        readonly input: 'write' | 'read'
     ) { }
 
     execute(parent?: AlarmStore) {
         const { clusterName } = this.configs;
 
-        const logicalName = `${this.name}-cpu-utilization`;
+        const logicalName = `${this.name}-storage-${this.input}-bytes`;
 
         const comparisonOperator = 'GreaterThanOrEqualToThreshold';
         const anomalyDetectionComparisonOperator = 'GreaterThanUpperThreshold';
-        const namespace = 'AWS/ECS';
-        const metricName = 'CPUUtilization';
+        const namespace = 'ECS/ContainerInsights';
+        const metricName = this.input === 'write' ? 'StorageWriteBytes' : 'StorageReadBytes';
         const stat = 'Average';
         const dimensions = { ClusterName: clusterName };
 
