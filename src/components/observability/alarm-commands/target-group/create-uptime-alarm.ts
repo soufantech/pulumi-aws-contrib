@@ -58,7 +58,7 @@ export class CreateUptimeAlarmCommand extends CreateAlarmCommand {
             });
 
         if (this.threshold === 0) {
-            alarmBuilder.hasAnomalyDetection({
+            alarmBuilder.setAnomalyDetection({
                 thresholdMetricId: 'e2',
                 anomalyComparison: 'LessThanLowerThreshold',
                 metricToWatchId: 'e1',

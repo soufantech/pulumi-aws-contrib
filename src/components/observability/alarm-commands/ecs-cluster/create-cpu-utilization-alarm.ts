@@ -45,7 +45,7 @@ export class CreateCpuUtilizationAlarmCommand extends CreateAlarmCommand {
             });
 
         if (this.threshold === 0) {
-            alarmBuilder.hasAnomalyDetection({
+            alarmBuilder.setAnomalyDetection({
                 thresholdMetricId: 'e1',
                 anomalyComparison: anomalyDetectionComparisonOperator,
                 metricToWatchId: 'm1',

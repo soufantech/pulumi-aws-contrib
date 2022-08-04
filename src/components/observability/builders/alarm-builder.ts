@@ -122,7 +122,7 @@ export default class AlarmBuilder {
         return this;
     }
 
-    hasAnomalyDetection(custom: AnomalyDetectionDTO) {
+    setAnomalyDetection(custom: AnomalyDetectionDTO) {
         this.isAnomaly = true;
         delete this.args.threshold;
         this.comparisonOperator(custom.anomalyComparison);
