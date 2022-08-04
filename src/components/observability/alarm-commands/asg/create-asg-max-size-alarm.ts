@@ -1,29 +1,28 @@
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
-import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
+import { AlarmExtraConfigs, AsgConfig } from '../../types';
 
-export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
+export default class CreateAsgMaxSizeAlarmCommand implements CreateAlarmCommand {
     // eslint-disable-next-line no-useless-constructor
     constructor(
         readonly name: string,
         readonly threshold: number,
-        readonly configs: TargetGroupConfig,
+        readonly configs: AsgConfig,
         readonly extraConfigs?: AlarmExtraConfigs
     ) { }
 
     execute(parent?: AlarmStore) {
-        const { loadBalancer, targetGroup } = this.configs;
+        const { asgName } = this.configs;
 
-        const comparisonOperator = 'LessThanOrEqualToThreshold';
-        const logicalName = `${this.name}-uptime`;
-        const namespace = 'AWS/ApplicationELB';
-        const stat = 'Sum';
-        const dimensions = { LoadBalancer: loadBalancer, TargetGroup: targetGroup };
+        const comparisonOperator = 'GreaterThanOrEqualToThreshold';
+        const logicalName = `${this.name}-asg-max-size`;
+        const namespace = 'AWS/AutoScaling';
+        const stat = 'Maximum';
+        const dimensions = { AutoScalingGroupName: asgName };
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
-            .isShortPeriod()
             .comparisonOperator(comparisonOperator)
             .evaluationPeriods(this.extraConfigs?.evaluationPeriods)
             .dataPointsToAlarm(this.extraConfigs?.datapointsToAlarm)
@@ -34,7 +33,7 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
                 id: 'm1',
                 stat,
                 dimensions,
-                metricName: 'RequestCount',
+                metricName: 'GroupInServiceInstances',
                 namespace,
                 period: this.extraConfigs?.period,
                 returnData: false,
@@ -42,7 +41,7 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
             .addMetric({
                 id: 'm2',
                 namespace,
-                metricName: 'HTTPCode_ELB_5XX_Count',
+                metricName: 'GroupMaxSize',
                 dimensions,
                 stat,
                 period: this.extraConfigs?.period,
@@ -50,19 +49,10 @@ export default class CreateUptimeAlarmCommand implements CreateAlarmCommand {
             })
             .addExpression({
                 id: 'e1',
-                expression: '(1-(m2/m1))*100',
-                label: 'Uptime',
+                expression: '(m1*100)/m2',
+                label: 'AsgMaxSize',
                 returnData: true,
             });
-
-        if (this.threshold === 0) {
-            alarmBuilder.hasAnomalyDetection({
-                thresholdMetricId: 'e2',
-                anomalyComparison: 'LessThanLowerThreshold',
-                metricToWatchId: 'e1',
-                label: 'Uptime',
-            });
-        }
 
         return alarmBuilder.build();
     }
