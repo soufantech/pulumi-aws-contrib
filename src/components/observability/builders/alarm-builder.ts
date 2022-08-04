@@ -125,6 +125,7 @@ export default class AlarmBuilder {
     setAnomalyDetection(custom: AnomalyDetectionDTO) {
         this.isAnomaly = true;
         delete this.args.threshold;
+        this.thresholdMetricId(custom.thresholdMetricId);
         this.comparisonOperator(custom.anomalyComparison);
         const standardDeviation = custom.standardDeviation || constants.STANDARD_DEVIATION;
         this.addExpression({
@@ -148,7 +149,7 @@ export default class AlarmBuilder {
             (this.isAnomaly ? constants.ANOMALY_DETECTION_DATAPOINTS : constants.DATAPOINTS);
         const datapointsToAlarm = this.args.datapointsToAlarm || evaluationPeriods;
 
-        if (!this.args.comparisonOperator || !this.alarmName) {
+        if (!this.args.comparisonOperator || !this.alarmName || !this.metricQueries.length) {
             throw new Error('Missing required configuration');
         }
 
