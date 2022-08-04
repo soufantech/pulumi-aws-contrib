@@ -1,14 +1,14 @@
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
-import { AlarmExtraConfigs, AsgConfig } from '../../types';
+import { NonAnomalyDetectionAlarmExtraConfigs, AsgConfig } from '../../types';
 
 export class CreateAsgMaxSizeAlarmCommand extends CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: AsgConfig,
-        readonly extraConfigs?: AlarmExtraConfigs
+        readonly extraConfigs?: NonAnomalyDetectionAlarmExtraConfigs,
     ) {
         super();
     }

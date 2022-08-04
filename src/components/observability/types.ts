@@ -41,14 +41,17 @@ export interface ExtraWidgets {
     end?: Widget[];
 }
 
-export interface AlarmExtraConfigs {
+export interface NonAnomalyDetectionAlarmExtraConfigs {
     snsTopicArns?: string[];
     datapointsToAlarm?: number;
     evaluationPeriods?: number;
     treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
-    standardDeviation?: number;
     period?: number;
     suffix?: string;
+}
+
+export interface AlarmExtraConfigs extends NonAnomalyDetectionAlarmExtraConfigs {
+    standardDeviation?: number;
 }
 
 export interface WrapperAlarmExtraConfigs {

@@ -1,14 +1,14 @@
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
-import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
+import { NonAnomalyDetectionAlarmExtraConfigs, TargetGroupConfig } from '../../types';
 
 export class CreateUptimeAlarmCommand extends CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: TargetGroupConfig,
-        readonly extraConfigs?: AlarmExtraConfigs
+        readonly extraConfigs?: NonAnomalyDetectionAlarmExtraConfigs
     ) {
         super();
     }
@@ -56,15 +56,6 @@ export class CreateUptimeAlarmCommand extends CreateAlarmCommand {
                 label: 'Uptime',
                 returnData: true,
             });
-
-        if (this.threshold === 0) {
-            alarmBuilder.setAnomalyDetection({
-                thresholdMetricId: 'e2',
-                anomalyComparison: 'LessThanLowerThreshold',
-                metricToWatchId: 'e1',
-                label: 'Uptime',
-            });
-        }
 
         return alarmBuilder.build();
     }
