@@ -3,7 +3,7 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
 
-export default class CreateTargetResponseAlarmCommand implements CreateAlarmCommand {
+export default class CreateTargetResponseTimeAlarmCommand implements CreateAlarmCommand {
     // eslint-disable-next-line no-useless-constructor
     constructor(
         readonly name: string,
