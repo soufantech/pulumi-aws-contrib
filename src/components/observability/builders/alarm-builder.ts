@@ -148,6 +148,7 @@ export default class AlarmBuilder {
             this.args.evaluationPeriods ||
             (this.isAnomaly ? constants.ANOMALY_DETECTION_DATAPOINTS : constants.DATAPOINTS);
         const datapointsToAlarm = this.args.datapointsToAlarm || evaluationPeriods;
+        const treatMissingData = this.args.treatMissingData || constants.TREAT_MISSING_DATA;
 
         if (!this.args.comparisonOperator || !this.alarmName || !this.metricQueries.length) {
             throw new Error('Missing required configuration');
@@ -160,6 +161,7 @@ export default class AlarmBuilder {
                 comparisonOperator: this.args.comparisonOperator,
                 datapointsToAlarm,
                 evaluationPeriods,
+                treatMissingData,
                 metricQueries: this.metricQueries,
             },
             {
