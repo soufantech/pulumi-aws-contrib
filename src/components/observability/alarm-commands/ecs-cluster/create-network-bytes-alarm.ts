@@ -3,7 +3,7 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { AlarmExtraConfigs, EcsClusterConfig } from '../../types';
 
-export default class CreateNetworkAlarmCommand implements CreateAlarmCommand {
+export default class CreateNetworkBytesAlarmCommand implements CreateAlarmCommand {
     // eslint-disable-next-line no-useless-constructor
     constructor(
         readonly name: string,

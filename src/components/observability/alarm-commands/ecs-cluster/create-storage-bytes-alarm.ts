@@ -1,20 +1,20 @@
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
-import { AlarmExtraConfigs, EcsServiceConfig } from '../../types';
+import { AlarmExtraConfigs, EcsClusterConfig } from '../../types';
 
-export default class CreateStorageAlarmCommand implements CreateAlarmCommand {
+export default class CreateStorageBytesAlarmCommand implements CreateAlarmCommand {
     // eslint-disable-next-line no-useless-constructor
     constructor(
         readonly name: string,
         readonly threshold: number,
-        readonly configs: EcsServiceConfig,
+        readonly configs: EcsClusterConfig,
         readonly extraConfigs: AlarmExtraConfigs = {},
         readonly input: 'write' | 'read'
     ) { }
 
     execute(parent?: AlarmStore) {
-        const { clusterName, serviceName } = this.configs;
+        const { clusterName } = this.configs;
 
         const logicalName = `${this.name}-storage-${this.input}-bytes`;
 
@@ -23,7 +23,7 @@ export default class CreateStorageAlarmCommand implements CreateAlarmCommand {
         const namespace = 'ECS/ContainerInsights';
         const metricName = this.input === 'write' ? 'StorageWriteBytes' : 'StorageReadBytes';
         const stat = 'Average';
-        const dimensions = { ClusterName: clusterName, ServiceName: serviceName };
+        const dimensions = { ClusterName: clusterName };
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)

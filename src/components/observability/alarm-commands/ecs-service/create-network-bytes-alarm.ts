@@ -1,29 +1,29 @@
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
-import { AlarmExtraConfigs, EcsClusterConfig } from '../../types';
+import { AlarmExtraConfigs, EcsServiceConfig } from '../../types';
 
-export default class CreateStorageAlarmCommand implements CreateAlarmCommand {
+export default class CreateNetworkBytesAlarmCommand implements CreateAlarmCommand {
     // eslint-disable-next-line no-useless-constructor
     constructor(
         readonly name: string,
         readonly threshold: number,
-        readonly configs: EcsClusterConfig,
+        readonly configs: EcsServiceConfig,
         readonly extraConfigs: AlarmExtraConfigs = {},
-        readonly input: 'write' | 'read'
+        readonly input: 'rx' | 'tx'
     ) { }
 
     execute(parent?: AlarmStore) {
-        const { clusterName } = this.configs;
+        const { clusterName, serviceName } = this.configs;
 
-        const logicalName = `${this.name}-storage-${this.input}-bytes`;
+        const logicalName = `${this.name}-network-${this.input}-bytes`;
 
         const comparisonOperator = 'GreaterThanOrEqualToThreshold';
         const anomalyDetectionComparisonOperator = 'GreaterThanUpperThreshold';
         const namespace = 'ECS/ContainerInsights';
-        const metricName = this.input === 'write' ? 'StorageWriteBytes' : 'StorageReadBytes';
+        const metricName = this.input === 'rx' ? 'NetworkRxBytes' : 'NetworkTxBytes';
         const stat = 'Average';
-        const dimensions = { ClusterName: clusterName };
+        const dimensions = { ClusterName: clusterName, ServiceName: serviceName };
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
