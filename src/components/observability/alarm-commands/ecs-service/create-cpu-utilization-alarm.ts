@@ -3,13 +3,15 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { AlarmExtraConfigs, EcsServiceConfig } from '../../types';
 
-export class CreateCpuUtilizationAlarmCommand implements CreateAlarmCommand {
+export class CreateCpuUtilizationAlarmCommand extends CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: EcsServiceConfig,
         readonly extraConfigs?: AlarmExtraConfigs
-    ) {}
+    ) {
+        super();
+    }
 
     execute(parent?: AlarmStore) {
         const { clusterName, serviceName } = this.configs;

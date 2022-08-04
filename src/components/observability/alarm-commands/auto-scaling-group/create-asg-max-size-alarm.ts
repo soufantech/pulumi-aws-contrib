@@ -3,13 +3,15 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { AlarmExtraConfigs, AsgConfig } from '../../types';
 
-export class CreateAsgMaxSizeAlarmCommand implements CreateAlarmCommand {
+export class CreateAsgMaxSizeAlarmCommand extends CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: AsgConfig,
         readonly extraConfigs?: AlarmExtraConfigs
-    ) {}
+    ) {
+        super();
+    }
 
     execute(parent?: AlarmStore) {
         const { asgName } = this.configs;

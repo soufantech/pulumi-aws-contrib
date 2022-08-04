@@ -3,13 +3,15 @@ import { CreateAlarmCommand } from '../../commands/create-alarm-command';
 import AlarmStore from '../../resources/alarm-store';
 import { TargetGroupConfig, AlarmExtraConfigs } from '../../types';
 
-export class CreateTargetResponseTimeAlarmCommand implements CreateAlarmCommand {
+export class CreateTargetResponseTimeAlarmCommand extends CreateAlarmCommand {
     constructor(
         readonly name: string,
         readonly threshold: number,
         readonly configs: TargetGroupConfig,
         readonly extraConfigs?: AlarmExtraConfigs
-    ) {}
+    ) {
+        super();
+    }
 
     execute(parent?: AlarmStore) {
         const { loadBalancer, targetGroup } = this.configs;

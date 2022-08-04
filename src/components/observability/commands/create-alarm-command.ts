@@ -1,7 +1,10 @@
 import { MetricAlarm } from '@pulumi/aws/cloudwatch';
 
 import AlarmStore from '../resources/alarm-store';
+import { AlarmStoreCommand } from './alarm-store-command';
 
-export interface CreateAlarmCommand {
-    execute(parent?: AlarmStore): MetricAlarm;
+export abstract class CreateAlarmCommand implements AlarmStoreCommand {
+    type = 'CreateAlarm';
+
+    abstract execute(ctx?: AlarmStore): MetricAlarm;
 }
