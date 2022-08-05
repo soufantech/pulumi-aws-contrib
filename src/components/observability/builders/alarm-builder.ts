@@ -144,15 +144,15 @@ export default class AlarmBuilder {
     }
 
     build() {
+        if (!this.args.comparisonOperator) throw new Error('Missing comparison operator');
+        if (!this.alarmName) throw new Error('Missing alarm name');
+        if (!this.metricQueries.length) throw new Error('Missing metrics');
+
         const evaluationPeriods =
             this.args.evaluationPeriods ||
             (this.isAnomaly ? constants.ANOMALY_DETECTION_DATAPOINTS : constants.DATAPOINTS);
         const datapointsToAlarm = this.args.datapointsToAlarm || evaluationPeriods;
         const treatMissingData = this.args.treatMissingData || constants.TREAT_MISSING_DATA;
-
-        if (!this.args.comparisonOperator || !this.alarmName || !this.metricQueries.length) {
-            throw new Error('Missing required configuration');
-        }
 
         return new aws.cloudwatch.MetricAlarm(
             this.alarmName,
