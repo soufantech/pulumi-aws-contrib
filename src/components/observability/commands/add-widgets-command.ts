@@ -1,6 +1,6 @@
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
-import { DashboardStore } from '../resources/widget-store';
+import { DashboardStore } from '../resources/dashboard-store';
 import { DashboardStoreCommand } from './dashboard-store-command';
 
 export class AddWidgetsCommand implements DashboardStoreCommand {

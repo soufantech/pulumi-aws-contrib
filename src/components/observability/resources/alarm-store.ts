@@ -7,8 +7,8 @@ import { CreateAlarmCommand } from '../commands/create-alarm-command';
 export default class AlarmStore extends pulumi.ComponentResource {
     private alarms: aws.cloudwatch.MetricAlarm[];
 
-    constructor(type: string, name: string, args?: pulumi.Inputs, opts?: pulumi.ResourceOptions) {
-        super(type, name, args, opts);
+    constructor(name: string, args?: pulumi.Inputs, opts?: pulumi.ResourceOptions) {
+        super('contrib:components:AlarmStore', name, args, opts);
         this.alarms = [];
     }
 

@@ -1,4 +1,4 @@
-import { DashboardStore } from '../resources/widget-store';
+import { DashboardStore } from '../resources/dashboard-store';
 
 export interface DashboardStoreCommand {
     type: string;

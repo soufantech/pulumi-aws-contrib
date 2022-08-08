@@ -8,12 +8,11 @@ export class DashboardStore extends pulumi.ComponentResource {
     private widgets: awsx.cloudwatch.Widget[] = [];
 
     constructor(
-        type: string,
         private name: string,
         args?: pulumi.Inputs,
         opts?: pulumi.ResourceOptions
     ) {
-        super(type, name, args, opts);
+        super('contrib:components:DashboardStore', name, args, opts);
         this.widgets = [];
     }
 
