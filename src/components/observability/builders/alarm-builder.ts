@@ -39,6 +39,8 @@ export default class AlarmBuilder {
 
     private alarmName: string;
 
+    private anomalyArgs?: AnomalyDetectionDto;
+
     private parent?: Resource;
 
     constructor() {
@@ -92,9 +94,7 @@ export default class AlarmBuilder {
                 metricName: metric.metricName,
                 namespace: metric.namespace,
                 stat: metric.stat,
-                period:
-                    metric.period ||
-                    (this.isShort ? constants.SHORT_PERIOD : constants.LONG_PERIOD),
+                period: metric.period || 0,
                 dimensions: metric.dimensions,
             },
             returnData: metric.returnData,
@@ -122,18 +122,9 @@ export default class AlarmBuilder {
         return this;
     }
 
-    setAnomalyDetection(custom: AnomalyDetectionDto) {
+    anomalyDetection(custom: AnomalyDetectionDto) {
         this.isAnomaly = true;
-        delete this.args.threshold;
-        this.thresholdMetricId(custom.thresholdMetricId);
-        this.comparisonOperator(custom.anomalyComparison);
-        const standardDeviation = custom.standardDeviation || constants.STANDARD_DEVIATION;
-        this.addExpression({
-            id: custom.thresholdMetricId,
-            expression: `ANOMALY_DETECTION_BAND(${custom.metricToWatchId}, ${standardDeviation})`,
-            label: `${custom.label} (Expected)`,
-            returnData: true,
-        });
+        this.anomalyArgs = custom;
         return this;
     }
 
@@ -143,16 +134,60 @@ export default class AlarmBuilder {
         return this;
     }
 
+    private setAnomalyDetection() {
+        if (!this.anomalyArgs) return;
+
+        this.comparisonOperator(this.anomalyArgs.anomalyComparison);
+
+        delete this.args.threshold;
+        this.thresholdMetricId(this.anomalyArgs.thresholdMetricId);
+
+        const standardDeviation = this.anomalyArgs.standardDeviation || constants.STANDARD_DEVIATION;
+        this.addExpression({
+            id: this.anomalyArgs.thresholdMetricId,
+            expression: `ANOMALY_DETECTION_BAND(${this.anomalyArgs.metricToWatchId}, ${standardDeviation})`,
+            label: `${this.anomalyArgs.label} (Expected)`,
+            returnData: true,
+        });
+
+        return this;
+    }
+
+    private ensurePeriodInMetrics() {
+        this.metricQueries = this.metricQueries.map((metricQuery) => {
+            const { metric } = metricQuery;
+            if (metric) {
+                const asMetric = <aws.types.input.cloudwatch.MetricAlarmMetricQueryMetric>metric;
+                if (!asMetric.period || asMetric.period <= 0) {
+                    return {
+                        ...metricQuery,
+                        metric: {
+                            ...metric,
+                            period: this.isShort ? constants.SHORT_PERIOD : constants.LONG_PERIOD,
+                        },
+                    };
+                }
+            }
+            return metricQuery;
+        });
+    }
+
     build() {
         if (!this.args.comparisonOperator) throw new Error('Missing comparison operator');
         if (!this.alarmName) throw new Error('Missing alarm name');
         if (!this.metricQueries.length) throw new Error('Missing metrics');
+
+        this.ensurePeriodInMetrics();
 
         const evaluationPeriods =
             this.args.evaluationPeriods ||
             (this.isAnomaly ? constants.ANOMALY_DETECTION_DATAPOINTS : constants.DATAPOINTS);
         const datapointsToAlarm = this.args.datapointsToAlarm || evaluationPeriods;
         const treatMissingData = this.args.treatMissingData || constants.TREAT_MISSING_DATA;
+
+        if (this.isAnomaly) {
+            this.setAnomalyDetection();
+        }
 
         return new aws.cloudwatch.MetricAlarm(
             this.alarmName,

@@ -45,7 +45,7 @@ export class CreateRequestCountAlarmCommand extends CreateAlarmCommand {
             });
 
         if (this.threshold === 0) {
-            alarmBuilder.setAnomalyDetection({
+            alarmBuilder.anomalyDetection({
                 thresholdMetricId: 'e1',
                 anomalyComparison: anomalyDetectionComparisonOperator,
                 metricToWatchId: 'm1',
