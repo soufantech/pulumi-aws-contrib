@@ -4,9 +4,7 @@ export type { slackNotificationFunctionTypes } from './slack-notification-functi
 export * from './observability';
 export type {
     ecsAggregationDashboardTypes,
-    ecsClusterAlarmTypes,
     ecsClusterDashboardTypes,
-    ecsServiceAlarmTypes,
     ecsServiceDashboardTypes,
     observabilityTypes,
 } from './observability';
