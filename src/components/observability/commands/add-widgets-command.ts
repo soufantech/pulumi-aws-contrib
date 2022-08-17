@@ -1,6 +1,5 @@
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
-import { DashboardStore } from '../resources/dashboard-store';
 import { DashboardStoreCommand } from './dashboard-store-command';
 
 export class AddWidgetsCommand implements DashboardStoreCommand {
@@ -8,7 +7,7 @@ export class AddWidgetsCommand implements DashboardStoreCommand {
 
     constructor(private widgets: Widget[]) {}
 
-    execute(parent: DashboardStore): Widget[] {
+    execute(): Widget[] {
         return this.widgets;
     }
 }

@@ -8,7 +8,7 @@ export class CreateAsgMaxSizeAlarmCommand extends CreateAlarmCommand {
         readonly name: string,
         readonly threshold: number,
         readonly configs: AsgConfig,
-        readonly extraConfigs?: NonAnomalyDetectionAlarmExtraConfigs,
+        readonly extraConfigs?: NonAnomalyDetectionAlarmExtraConfigs
     ) {
         super();
     }
