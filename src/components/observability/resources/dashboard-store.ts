@@ -7,18 +7,21 @@ import { DashboardStoreCommand } from '../commands/dashboard-store-command';
 export class DashboardStore extends pulumi.ComponentResource {
     private widgets: awsx.cloudwatch.Widget[] = [];
 
-    constructor(
-        private name: string,
-        args?: pulumi.Inputs,
-        opts?: pulumi.ResourceOptions
-    ) {
+    private dashboard: awsx.cloudwatch.Dashboard;
+
+    constructor(private name: string, args?: pulumi.Inputs, opts?: pulumi.ResourceOptions) {
         super('contrib:components:DashboardStore', name, args, opts);
         this.widgets = [];
+        this.dashboard = new awsx.cloudwatch.Dashboard(
+            this.name,
+            { widgets: this.widgets },
+            { parent: this }
+        );
     }
 
     private addWidgetsReducer(command: DashboardStoreCommand) {
         if (command instanceof AddWidgetsCommand) {
-            this.widgets = [...this.widgets, ...command.execute(this)];
+            this.widgets = [...this.widgets, ...command.execute()];
         }
     }
 
@@ -28,11 +31,20 @@ export class DashboardStore extends pulumi.ComponentResource {
         });
     }
 
-    getDashboard() {
-        return new awsx.cloudwatch.Dashboard(
+    private updateDashboard() {
+        this.dashboard = new awsx.cloudwatch.Dashboard(
             this.name,
             { widgets: this.widgets },
-            { parent: this }
+            { parent: this, urn: String(this.dashboard.urn), id: this.dashboard.id }
         );
+    }
+
+    getDashboard() {
+        this.updateDashboard();
+        return this.dashboard;
+    }
+
+    getArn() {
+        return this.getDashboard().dashboardArn;
     }
 }
