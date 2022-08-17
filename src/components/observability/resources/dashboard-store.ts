@@ -19,15 +19,13 @@ export class DashboardStore extends pulumi.ComponentResource {
         );
     }
 
-    private addWidgetsReducer(command: DashboardStoreCommand) {
-        if (command instanceof AddWidgetsCommand) {
-            this.widgets = [...this.widgets, ...command.execute()];
-        }
+    private addWidgetsReducer(command: AddWidgetsCommand) {
+        this.widgets = [...this.widgets, ...command.execute()];
     }
 
     dispatch(...commands: DashboardStoreCommand[]) {
         commands.forEach((command) => {
-            if (command.type === 'AddWidgets') this.addWidgetsReducer(command);
+            if (command instanceof AddWidgetsCommand) this.addWidgetsReducer(command);
         });
     }
 

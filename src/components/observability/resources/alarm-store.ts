@@ -18,7 +18,7 @@ export default class AlarmStore extends pulumi.ComponentResource {
 
     dispatch(...commands: AlarmStoreCommand[]) {
         commands.forEach((command) => {
-            if (command.type === 'CreateAlarm') this.createAlarmReducer(command);
+            if (command instanceof CreateAlarmCommand) this.createAlarmReducer(command);
         });
     }
 

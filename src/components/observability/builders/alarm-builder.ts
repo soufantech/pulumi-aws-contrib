@@ -135,14 +135,15 @@ export default class AlarmBuilder {
     }
 
     private setAnomalyDetection() {
-        if (!this.anomalyArgs) return;
+        if (!this.anomalyArgs) return this;
 
         this.comparisonOperator(this.anomalyArgs.anomalyComparison);
 
         delete this.args.threshold;
         this.thresholdMetricId(this.anomalyArgs.thresholdMetricId);
 
-        const standardDeviation = this.anomalyArgs.standardDeviation || constants.STANDARD_DEVIATION;
+        const standardDeviation =
+            this.anomalyArgs.standardDeviation || constants.STANDARD_DEVIATION;
         this.addExpression({
             id: this.anomalyArgs.thresholdMetricId,
             expression: `ANOMALY_DETECTION_BAND(${this.anomalyArgs.metricToWatchId}, ${standardDeviation})`,
