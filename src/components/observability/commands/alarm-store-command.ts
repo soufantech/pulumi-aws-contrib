@@ -1,4 +1,4 @@
-import AlarmStore from '../resources/alarm-store';
+import { AlarmStore } from '../resources';
 
 export interface AlarmStoreCommand {
     execute(ctx?: AlarmStore): unknown;

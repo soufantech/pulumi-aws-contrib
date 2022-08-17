@@ -1,6 +1,6 @@
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
-import AlarmStore from '../../resources/alarm-store';
+import { AlarmStore } from '../../resources';
 import { NonAnomalyDetectionAlarmExtraConfigs, AsgConfig } from '../../types';
 
 export class CreateAsgMaxSizeAlarmCommand extends CreateAlarmCommand {
