@@ -2,8 +2,8 @@ import type * as observabilityTypes from './types';
 
 export type { observabilityTypes };
 
-export * from './alarm-commands';
-export * from './widget-factories';
+export * from './commands/alarms';
+export * from './factories/widgets';
 export * from './stores';
 export * from './builders';
 
