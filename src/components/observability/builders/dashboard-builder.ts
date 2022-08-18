@@ -1,17 +1,17 @@
 import * as awsx from '@pulumi/awsx';
 
 export class DashboardBuilder {
-    private name: string;
+    private dashboardName: string;
 
     private widgets: awsx.cloudwatch.Widget[];
 
     constructor() {
-        this.name = '';
+        this.dashboardName = '';
         this.widgets = [];
     }
 
-    setName(name: string) {
-        this.name = name;
+    name(name: string) {
+        this.dashboardName = name;
         return this;
     }
 
@@ -22,8 +22,8 @@ export class DashboardBuilder {
 
     build() {
         if (!this.widgets.length) throw new Error('Dashboard must contain at least one widget');
-        if (!this.name) throw new Error('Dashboard is missing required property: name');
-        return new awsx.cloudwatch.Dashboard(this.name, {
+        if (!this.dashboardName) throw new Error('Dashboard is missing required property: name');
+        return new awsx.cloudwatch.Dashboard(this.dashboardName, {
             widgets: this.widgets,
         });
     }
