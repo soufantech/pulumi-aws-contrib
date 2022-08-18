@@ -16,7 +16,7 @@ export { default as EcsServiceDashboard } from './ecs-service-dashboard';
 
 export * from './alarm-commands';
 export * from './widget-factories';
-export * from './resources';
-export * from './commands';
+export * from './stores';
+export * from './builders';
 
 export * as observabilityConstants from './constants';

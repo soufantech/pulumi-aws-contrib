@@ -174,9 +174,11 @@ export default class AlarmBuilder {
     }
 
     build() {
-        if (!this.args.comparisonOperator) throw new Error('Missing comparison operator');
-        if (!this.alarmName) throw new Error('Missing alarm name');
-        if (!this.metricQueries.length) throw new Error('Missing metrics');
+        if (!this.args.comparisonOperator)
+            throw new Error('Alarm is missing required property:comparison operator');
+        if (!this.alarmName) throw new Error('Alarm is missing required property: name');
+        if (!this.metricQueries.length)
+            throw new Error('Alarm must contain at list one metric query');
 
         this.ensurePeriodInMetrics();
 

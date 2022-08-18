@@ -1,6 +1,6 @@
 import AlarmBuilder from '../../builders/alarm-builder';
 import { CreateAlarmCommand } from '../../commands/create-alarm-command';
-import { AlarmStore } from '../../resources';
+import { AlarmStore } from '../../stores';
 import { NonAnomalyDetectionAlarmExtraConfigs, TargetGroupConfig } from '../../types';
 
 export class CreateUptimeAlarmCommand extends CreateAlarmCommand {
