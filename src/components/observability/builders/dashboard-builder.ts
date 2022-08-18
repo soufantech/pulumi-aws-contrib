@@ -16,7 +16,7 @@ export class DashboardBuilder {
     }
 
     addWidgets(widgets: awsx.cloudwatch.Widget[]) {
-        this.widgets = [...this.widgets, ...widgets];
+        this.widgets.push(...widgets);
         return this;
     }
 

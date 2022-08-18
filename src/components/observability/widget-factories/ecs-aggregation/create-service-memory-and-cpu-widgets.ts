@@ -3,11 +3,10 @@ import * as awsx from '@pulumi/awsx';
 import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
-import { EcsServiceAggregationDashboardConfig } from '../../ecs-aggregation-dashboard';
-import { WidgetExtraConfigs } from '../../types';
+import { EcsAggregationConfig, WidgetExtraConfigs } from '../../types';
 
 export default function createWidgets(
-    configs: EcsServiceAggregationDashboardConfig,
+    configs: EcsAggregationConfig,
     extraConfigs?: WidgetExtraConfigs
 ): Widget[] {
     const { services } = configs;

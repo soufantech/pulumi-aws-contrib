@@ -4,15 +4,15 @@ import { Widget } from '@pulumi/awsx/cloudwatch';
 
 import * as constants from '../../constants';
 import {
-    EcsAggregationDashboardInstanceConfig,
-    EcsAggregationDashboardServiceConfig,
-    EcsServiceAggregationDashboardConfig,
-} from '../../ecs-aggregation-dashboard';
-import { WidgetExtraConfigs } from '../../types';
+    EcsAggregationConfig,
+    EcsAggregationInstanceConfig,
+    EcsAggregationServiceConfig,
+    WidgetExtraConfigs,
+} from '../../types';
 
 function createInstanceAndTaskCountWidgets(
-    services: EcsAggregationDashboardServiceConfig[],
-    instances: EcsAggregationDashboardInstanceConfig[],
+    services: EcsAggregationServiceConfig[],
+    instances: EcsAggregationInstanceConfig[],
     extraConfigs?: WidgetExtraConfigs
 ): Widget[] {
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
@@ -61,7 +61,7 @@ function createInstanceAndTaskCountWidgets(
 }
 
 function createOnlyTaskCountWidgets(
-    services: EcsAggregationDashboardServiceConfig[],
+    services: EcsAggregationServiceConfig[],
     extraConfigs?: WidgetExtraConfigs
 ): Widget[] {
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
@@ -92,7 +92,7 @@ function createOnlyTaskCountWidgets(
 }
 
 export default function createWidgets(
-    configs: EcsServiceAggregationDashboardConfig,
+    configs: EcsAggregationConfig,
     extraConfigs?: WidgetExtraConfigs
 ): Widget[] {
     const { services, instances } = configs;
