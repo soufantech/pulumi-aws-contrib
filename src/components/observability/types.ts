@@ -1,7 +1,3 @@
-import aws from '@pulumi/aws';
-import { Widget } from '@pulumi/awsx/cloudwatch';
-import pulumi from '@pulumi/pulumi';
-
 export type ValueOf<T> = T[keyof T];
 
 export interface EcsClusterConfig {
@@ -37,60 +33,34 @@ export interface EcsServiceWithAsgConfig {
     asgName?: string;
 }
 
-export interface ExtraWidgets {
-    begin?: Widget[];
-    end?: Widget[];
+export interface EcsAggregationServiceConfig {
+    serviceConfig: EcsServiceConfig;
+    targetGroupConfig?: TargetGroupConfig;
 }
 
-export interface AlarmExtraConfigs {
-    parent?: pulumi.Resource;
+export interface EcsAggregationInstanceConfig {
+    asgConfig: AsgConfig;
+}
+
+export type EcsAggregationConfig = {
+    services: EcsAggregationServiceConfig[];
+    instances?: EcsAggregationInstanceConfig[];
+};
+
+export interface NonAnomalyDetectionAlarmExtraConfigs {
     snsTopicArns?: string[];
     datapointsToAlarm?: number;
     evaluationPeriods?: number;
     treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
-    standardDeviation?: number;
     period?: number;
+    suffix?: string;
 }
 
-export interface WrapperAlarmExtraConfigs {
-    snsTopicArns?: string[];
-    datapointsToAlarm?: number;
-    evaluationPeriods?: number;
-    treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
+export interface AlarmExtraConfigs extends NonAnomalyDetectionAlarmExtraConfigs {
     standardDeviation?: number;
-    period?: number;
 }
 
 export interface WidgetExtraConfigs {
     shortPeriod?: number;
     longPeriod?: number;
 }
-
-export interface WrapperWidgetExtraConfigs {
-    shortPeriod?: number;
-    longPeriod?: number;
-}
-
-export type AlarmFactory = (
-    name: string,
-    threshold: number,
-    configs: Record<string, string>,
-    extraConfigs?: AlarmExtraConfigs
-) => aws.cloudwatch.MetricAlarm;
-
-export type WrapperAlarmFactory = (
-    name: string,
-    threshold: number,
-    configs: Record<string, string>,
-    extraConfigs?: WrapperAlarmExtraConfigs
-) => aws.cloudwatch.MetricAlarm | undefined;
-
-export type WidgetFactory = (
-    configs: Record<string, string>,
-    extraConfigs?: WidgetExtraConfigs
-) => Widget[];
-
-export type WrapperWidgetFactory = (
-    configs: Record<string, string>,
-    extraConfigs?: WrapperWidgetExtraConfigs
-) => Widget[];
