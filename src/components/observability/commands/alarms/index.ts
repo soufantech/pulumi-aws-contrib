@@ -1,4 +1,9 @@
-export * as AsgAlarmCommands from './auto-scaling-group';
-export * as EcsClusterAlarmCommands from './ecs-cluster';
-export * as EcsServiceAlarmCommands from './ecs-service';
-export * as TgAlarmCommands from './target-group';
+import * as AsgAlarmCommandsImport from './auto-scaling-group';
+import * as EcsClusterAlarmCommandsImport from './ecs-cluster';
+import * as EcsServiceAlarmCommandsImport from './ecs-service';
+import * as TgAlarmCommandsImport from './target-group';
+
+export const AsgAlarmCommands = AsgAlarmCommandsImport;
+export const EcsClusterAlarmCommands = EcsClusterAlarmCommandsImport;
+export const EcsServiceAlarmCommands = EcsServiceAlarmCommandsImport;
+export const TgAlarmCommands = TgAlarmCommandsImport;

@@ -1,6 +1,6 @@
 {
   "name": "@soufantech/pulumi-aws-contrib",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Library to grouping different abstracted components for common flows",
   "keywords": [
     "iac",

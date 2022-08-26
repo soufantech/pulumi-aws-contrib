@@ -7,4 +7,5 @@ export * from './factories/widgets';
 export * from './stores';
 export * from './builders';
 
-export * as observabilityConstants from './constants';
+import * as observabilityConstantsImport from './constants';
+export const observabilityConstants = observabilityConstantsImport;

@@ -1,6 +1,13 @@
-export * as asgWidgets from './asg';
-export * as ecsClusterWidgets from './ecs-cluster';
-export * as ecsServiceWidgets from './ecs-service';
-export * as ecsAggregationWidgets from './ecs-aggregation';
-export * as miscWidgets from './misc';
-export * as tgWidgets from './target-group';
+import * as asgWidgetsImport from './asg';
+import * as ecsClusterWidgetsImport from './ecs-cluster';
+import * as ecsServiceWidgetsImport from './ecs-service';
+import * as ecsAggregationWidgetsImport from './ecs-aggregation';
+import * as miscWidgetsImport from './misc';
+import * as tgWidgetsImport from './target-group';
+
+export const asgWidgets = asgWidgetsImport;
+export const ecsClusterWidgets = ecsClusterWidgetsImport;
+export const ecsServiceWidgets = ecsServiceWidgetsImport;
+export const ecsAggregationWidgets = ecsAggregationWidgetsImport;
+export const miscWidgets = miscWidgetsImport;
+export const tgWidgets = tgWidgetsImport;
