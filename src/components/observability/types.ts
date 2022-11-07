@@ -47,6 +47,10 @@ export type EcsAggregationConfig = {
     instances?: EcsAggregationInstanceConfig[];
 };
 
+export interface RdsConfig {
+    dbInstanceIdentifier: string;
+}
+
 export interface NonAnomalyDetectionAlarmExtraConfigs {
     snsTopicArns?: string[];
     datapointsToAlarm?: number;
