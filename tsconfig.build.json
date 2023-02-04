@@ -1,8 +1,8 @@
 {
-  "extends": "./tsconfig.json",
-  "exclude": [
-    "**/__tests__/",
-    "**/__mocks__/",
-    "**/webpack.config.*"
-  ]
+    "extends": "./tsconfig.json",
+    "exclude": [
+        "**/__tests__/",
+        "**/__mocks__/",
+        "**/webpack.config.*"
+    ]
 }

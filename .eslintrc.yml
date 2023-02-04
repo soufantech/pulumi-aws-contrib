@@ -1,31 +1,32 @@
+root: true
 env:
   node: true
-  es6: true
-  commonjs: false
+  es2021: true
   jest: true
-extends:
-  - airbnb-base
-  - prettier
-  - plugin:@typescript-eslint/recommended
-  - plugin:sonarjs/recommended
-  - plugin:security/recommended
-parser: "@typescript-eslint/parser"
+parser: '@typescript-eslint/parser'
 parserOptions:
   ecmaVersion: latest
   sourceType: module
+globals:
+  Atomics: readonly
+  SharedArrayBuffer: readonly
 plugins:
-  - "@typescript-eslint"
+  - '@typescript-eslint'
   - prettier
   - eslint-plugin-import-helpers
   - sonarjs
   - security
+extends:
+  - airbnb-base
+  - airbnb-typescript/base
+  - plugin:@typescript-eslint/recommended
+  - prettier
+  - plugin:sonarjs/recommended
+  - plugin:security/recommended
 settings:
   import/resolver:
     node:
-      extensions: [".js", ".jsx", ".ts", ".tsx"]
-globals:
-  Atomics: readonly
-  SharedArrayBuffer: readonly
+      extensions: ['.js', '.jsx', '.ts', '.tsx']
 rules:
   import/prefer-default-export: off
   no-useless-constructor: off
@@ -38,14 +39,14 @@ rules:
       printWidth: 100
   import-helpers/order-imports:
     - warn
-    - newlinesBetween: "always"
+    - newlinesBetween: 'always'
       groups:
-        - "module"
-        - "/^@pulumi/"
-        - "/^@soufantech/"
-        - ["parent", "sibling", "index"]
+        - 'module'
+        - '/^@pulumi/'
+        - '/^@soufantech/'
+        - ['parent', 'sibling', 'index']
       alphabetize:
-        order: "asc"
+        order: 'asc'
         ignoreCase: true
   import/extensions:
     - error
