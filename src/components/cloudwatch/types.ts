@@ -1,36 +1,38 @@
+import * as pulumi from '@pulumi/pulumi';
+
 export type ValueOf<T> = T[keyof T];
 
 export interface EcsClusterConfig {
-    clusterName: string;
+    clusterName: pulumi.Input<string>;
 }
 
 export interface EcsServiceConfig {
-    clusterName: string;
-    serviceName: string;
+    clusterName: pulumi.Input<string>;
+    serviceName: pulumi.Input<string>;
 }
 
 export interface AlbConfig {
-    loadBalancer: string;
+    loadBalancer: pulumi.Input<string>;
 }
 
 export interface TargetGroupConfig {
-    loadBalancer: string;
-    targetGroup: string;
+    loadBalancer: pulumi.Input<string>;
+    targetGroup: pulumi.Input<string>;
 }
 
 export interface AsgConfig {
-    asgName: string;
+    asgName: pulumi.Input<string>;
 }
 
 export interface EcsClusterWithAsgConfig {
-    clusterName: string;
-    asgName?: string;
+    clusterName: pulumi.Input<string>;
+    asgName?: pulumi.Input<string>;
 }
 
 export interface EcsServiceWithAsgConfig {
-    clusterName: string;
-    serviceName: string;
-    asgName?: string;
+    clusterName: pulumi.Input<string>;
+    serviceName: pulumi.Input<string>;
+    asgName?: pulumi.Input<string>;
 }
 
 export interface EcsAggregationServiceConfig {
@@ -48,23 +50,23 @@ export type EcsAggregationConfig = {
 };
 
 export interface RdsConfig {
-    dbInstanceIdentifier: string;
+    dbInstanceIdentifier: pulumi.Input<string>;
 }
 
 export interface NonAnomalyDetectionAlarmExtraConfigs {
-    snsTopicArns?: string[];
-    datapointsToAlarm?: number;
-    evaluationPeriods?: number;
-    treatMissingData?: 'missing' | 'ignore' | 'breaching' | 'notBreaching';
-    period?: number;
     suffix?: string;
+    snsTopicArns?: pulumi.Input<string>[];
+    datapointsToAlarm?: pulumi.Input<number>;
+    evaluationPeriods?: pulumi.Input<number>;
+    treatMissingData?: pulumi.Input<'missing' | 'ignore' | 'breaching' | 'notBreaching'>;
+    period?: pulumi.Input<number>;
 }
 
 export interface AlarmExtraConfigs extends NonAnomalyDetectionAlarmExtraConfigs {
-    standardDeviation?: number;
+    standardDeviation?: pulumi.Input<number>;
 }
 
 export interface WidgetExtraConfigs {
-    shortPeriod?: number;
-    longPeriod?: number;
+    shortPeriod?: pulumi.Input<number>;
+    longPeriod?: pulumi.Input<number>;
 }

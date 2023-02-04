@@ -1,14 +1,15 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import * as awsx from '@pulumi/awsx/classic';
 import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
 import { EcsServiceWithAsgConfig, WidgetExtraConfigs } from '../../../types';
 
 function createInstanceAndTaskCountWidgets(
-    clusterName: string,
-    serviceName: string,
-    asgName: string,
+    clusterName: pulumi.Input<string>,
+    serviceName: pulumi.Input<string>,
+    asgName: pulumi.Input<string>,
     extraConfigs?: WidgetExtraConfigs
 ): Widget[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
@@ -87,8 +88,8 @@ function createInstanceAndTaskCountWidgets(
 }
 
 function createOnlyTaskCountWidgets(
-    clusterName: string,
-    serviceName: string,
+    clusterName: pulumi.Input<string>,
+    serviceName: pulumi.Input<string>,
     extraConfigs?: WidgetExtraConfigs
 ): Widget[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;

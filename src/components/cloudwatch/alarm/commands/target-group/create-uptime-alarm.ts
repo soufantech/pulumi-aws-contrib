@@ -1,3 +1,5 @@
+import * as pulumi from '@pulumi/pulumi';
+
 import { AlarmBuilder } from '../../alarm-builder';
 import { AlarmStore } from '../../alarm-store';
 import { NonAnomalyDetectionAlarmExtraConfigs, TargetGroupConfig } from '../../../types';
@@ -6,7 +8,7 @@ import { CreateAlarmCommand } from '../../create-alarm-command';
 export class CreateUptimeAlarmCommand extends CreateAlarmCommand {
     constructor(
         readonly name: string,
-        readonly threshold: number,
+        readonly threshold: pulumi.Input<number>,
         readonly configs: TargetGroupConfig,
         readonly extraConfigs?: NonAnomalyDetectionAlarmExtraConfigs
     ) {

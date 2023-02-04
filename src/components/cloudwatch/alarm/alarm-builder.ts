@@ -1,31 +1,32 @@
 import * as aws from '@pulumi/aws';
+import * as pulumi from '@pulumi/pulumi';
 import { Resource } from '@pulumi/pulumi';
 
 import * as constants from '../constants';
 
 type AddMetricDto = {
-    id: string;
-    stat: string;
-    metricName: string;
-    namespace: string;
-    period?: number;
-    returnData: boolean;
-    dimensions: Record<string, string>;
+    id: pulumi.Input<string>;
+    stat: pulumi.Input<string>;
+    metricName: pulumi.Input<string>;
+    namespace: pulumi.Input<string>;
+    period?: pulumi.Input<number>;
+    returnData: pulumi.Input<boolean>;
+    dimensions: Record<string, pulumi.Input<string>>;
 };
 
 type AddExpressionDto = {
-    id: string;
-    expression: string;
-    label: string;
-    returnData: boolean;
+    id: pulumi.Input<string>;
+    expression: pulumi.Input<string>;
+    label: pulumi.Input<string>;
+    returnData: pulumi.Input<boolean>;
 };
 
 type AnomalyDetectionDto = {
-    thresholdMetricId: string;
-    metricToWatchId: string;
-    standardDeviation?: number;
-    anomalyComparison: string;
-    label: string;
+    thresholdMetricId: pulumi.Input<string>;
+    metricToWatchId: pulumi.Input<string>;
+    standardDeviation?: pulumi.Input<number>;
+    anomalyComparison: pulumi.Input<string>;
+    label: pulumi.Input<string>;
 };
 
 export class AlarmBuilder {
@@ -61,17 +62,17 @@ export class AlarmBuilder {
         return this;
     }
 
-    comparisonOperator(comparisonOperator: string) {
+    comparisonOperator(comparisonOperator: pulumi.Input<string>) {
         this.args.comparisonOperator = comparisonOperator;
         return this;
     }
 
-    evaluationPeriods(evaluationPeriods?: number) {
+    evaluationPeriods(evaluationPeriods?: pulumi.Input<number>) {
         this.args.evaluationPeriods = evaluationPeriods;
         return this;
     }
 
-    dataPointsToAlarm(dataPointsToAlarm?: number) {
+    dataPointsToAlarm(dataPointsToAlarm?: pulumi.Input<number>) {
         this.args.datapointsToAlarm = dataPointsToAlarm;
         return this;
     }
@@ -81,7 +82,7 @@ export class AlarmBuilder {
         return this;
     }
 
-    treatMissingData(treatMissingData?: string) {
+    treatMissingData(treatMissingData?: pulumi.Input<string>) {
         this.args.treatMissingData = treatMissingData;
         return this;
     }
@@ -112,12 +113,12 @@ export class AlarmBuilder {
         return this;
     }
 
-    threshold(threshold: number) {
+    threshold(threshold: pulumi.Input<number>) {
         this.args.threshold = threshold;
         return this;
     }
 
-    thresholdMetricId(id: string) {
+    thresholdMetricId(id: pulumi.Input<string>) {
         this.args.thresholdMetricId = id;
         return this;
     }
@@ -128,7 +129,7 @@ export class AlarmBuilder {
         return this;
     }
 
-    snsTopicArns(snsTopicArns?: string[]) {
+    snsTopicArns(snsTopicArns?: pulumi.Input<string>[]) {
         this.args.alarmActions = snsTopicArns;
         this.args.okActions = snsTopicArns;
         return this;
