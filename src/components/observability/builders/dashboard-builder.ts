@@ -1,4 +1,4 @@
-import * as awsx from '@pulumi/awsx';
+import * as awsx from '@pulumi/awsx/classic';
 
 export class DashboardBuilder {
     private dashboardName: string;

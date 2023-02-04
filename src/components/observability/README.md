@@ -106,7 +106,7 @@ new EcsServiceDashboard(resourceName, {
 #### Use factories
 
 ```typescript
-import * as awsx from '@pulumi/awsx';
+import * as awsx from '@pulumi/awsx/classic';
 import * as pulumi from '@pulumi/pulumi';
 
 import { ecsServiceWidgets, miscWidgets, tgWidgets } from '@soufantech/pulumi-aws-contrib';
@@ -238,7 +238,7 @@ Problem fix
 
 ```shell
 # in project root directory run...
-cp ./problem-fix/*.{js,ts} ./node_modules/@pulumi/awsx/cloudwatch
+cp ./problem-fix/*.{js,ts} ./node_modules/@pulumi/awsx/classic/cloudwatch
 ```
 
 To ensure that the files work the version of the `@pulumi/awsx` package needs to be fixed.  That is, whenever updating this package, it is necessary to redo the manual process.
@@ -249,7 +249,7 @@ It is necessary to insert the ID property in several parts of the code. And to i
 
 Below is the list of files with the context where the line should be inserted and the `yAxis` property above each insertion point of the `id` property.
 
-#### node_modules/@pulumi/awsx/cloudwatch/metric.js
+#### node_modules/@pulumi/awsx/classic/cloudwatch/metric.js
 
 ```javascript
 ...
@@ -297,7 +297,7 @@ class Metric {
 ...
 ```
 
-#### node_modules/@pulumi/awsx/cloudwatch/metric.d.ts
+#### node_modules/@pulumi/awsx/classic/cloudwatch/metric.d.ts
 
 ```typescript
 ...
@@ -349,7 +349,7 @@ export interface MetricArgs {
 ...
 ```
 
-#### node_modules/@pulumi/awsx/cloudwatch/widgets_json.d.ts
+#### node_modules/@pulumi/awsx/classic/cloudwatch/widgets_json.d.ts
 
 ```typescript
 ...
