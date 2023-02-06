@@ -1,8 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 
+import { AlarmExtraConfigs, RdsConfig } from '../../../types';
 import { AlarmBuilder } from '../../alarm-builder';
 import { AlarmStore } from '../../alarm-store';
-import { AlarmExtraConfigs, RdsConfig } from '../../../types';
 import { CreateAlarmCommand } from '../../create-alarm-command';
 
 export class DatabaseConnections extends CreateAlarmCommand {

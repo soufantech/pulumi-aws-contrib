@@ -1,8 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 
+import { NonAnomalyDetectionAlarmExtraConfigs, AsgConfig } from '../../../types';
 import { AlarmBuilder } from '../../alarm-builder';
 import { AlarmStore } from '../../alarm-store';
-import { NonAnomalyDetectionAlarmExtraConfigs, AsgConfig } from '../../../types';
 import { CreateAlarmCommand } from '../../create-alarm-command';
 
 export class AsgMaxSize extends CreateAlarmCommand {

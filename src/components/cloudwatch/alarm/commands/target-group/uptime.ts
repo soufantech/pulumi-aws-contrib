@@ -1,8 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 
+import { NonAnomalyDetectionAlarmExtraConfigs, TargetGroupConfig } from '../../../types';
 import { AlarmBuilder } from '../../alarm-builder';
 import { AlarmStore } from '../../alarm-store';
-import { NonAnomalyDetectionAlarmExtraConfigs, TargetGroupConfig } from '../../../types';
 import { CreateAlarmCommand } from '../../create-alarm-command';
 
 export class Uptime extends CreateAlarmCommand {

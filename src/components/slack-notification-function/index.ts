@@ -1,5 +1,3 @@
-import type * as slackNotificationFunctionTypes from './component';
+export type { SlackNotificationFunctionArgs } from './component';
 
-export type { slackNotificationFunctionTypes };
-
-export { default as SlackNotificationFunction } from './component';
+export { SlackNotificationFunction } from './component';

@@ -1,8 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 
+import { TargetGroupConfig, AlarmExtraConfigs } from '../../../types';
 import { AlarmBuilder } from '../../alarm-builder';
 import { AlarmStore } from '../../alarm-store';
-import { TargetGroupConfig, AlarmExtraConfigs } from '../../../types';
 import { CreateAlarmCommand } from '../../create-alarm-command';
 
 export class TargetResponseTime extends CreateAlarmCommand {
