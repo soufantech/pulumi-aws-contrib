@@ -1,6 +1,5 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { Resource } from '@pulumi/pulumi';
 
 import * as constants from '../constants';
 
@@ -42,7 +41,7 @@ export class AlarmBuilder {
 
     private anomalyArgs?: AnomalyDetectionDto;
 
-    private parent?: Resource;
+    private parent?: pulumi.Resource;
 
     constructor() {
         this.args = {};
@@ -77,7 +76,7 @@ export class AlarmBuilder {
         return this;
     }
 
-    setParent(parent?: Resource) {
+    setParent(parent?: pulumi.Resource) {
         this.parent = parent;
         return this;
     }
