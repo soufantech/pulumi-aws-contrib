@@ -12,7 +12,7 @@ export interface SlackNotificationFunctionArgs {
     tags?: Record<string, string>;
 }
 
-export default class SlackNotificationFunction extends pulumi.ComponentResource {
+export class SlackNotificationFunction extends pulumi.ComponentResource {
     readonly role: aws.iam.Role;
 
     readonly kmsKey: aws.kms.Key;
@@ -249,7 +249,6 @@ export default class SlackNotificationFunction extends pulumi.ComponentResource 
                 handler,
                 environment: {
                     variables: {
-                        SLACK_CHANNEL: '#squad-mexican-rangers-alarms',
                         SLACK_WEBHOOK: slackWebhookCiphertext.ciphertextBlob,
                         KMS_KEY_ID: kmsAlias.arn,
                         KMS_REGION: region,

@@ -1,5 +1,4 @@
-export * from './slack-notification-function';
-export type { slackNotificationFunctionTypes } from './slack-notification-function';
+import * as cloudwatch from './cloudwatch';
+import * as slackNotificationFunction from './slack-notification-function';
 
-export * from './observability';
-export type { observabilityTypes } from './observability';
+export { cloudwatch, slackNotificationFunction };
