@@ -65,10 +65,11 @@ export class MetricBuilder {
                 if (percentile < 0 || percentile > 100) {
                     throw new Error('Percentile must be between 0 and 100');
                 }
-            }
-            const validStats = ['Average', 'Maximum', 'Minimum', 'SampleCount', 'Sum'];
-            if (s && !validStats.includes(s)) {
-                throw new Error(`Stat must be one of ${validStats.join(', ')}`);
+            } else {
+                const validStats = ['Average', 'Maximum', 'Minimum', 'SampleCount', 'Sum'];
+                if (s && !validStats.includes(s)) {
+                    throw new Error(`Stat must be one of ${validStats.join(', ')}`);
+                }
             }
         });
 
