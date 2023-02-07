@@ -1,68 +1,67 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { EcsServiceConfig, WidgetExtraConfigs } from '../../../types';
+import { Widget, EcsServiceConfig, WidgetExtraConfigs } from '../../../types';
+import { MetricBuilder, MetricWidgetBuilder } from '../../builders';
 
 export function networkAndStorage(
     configs: EcsServiceConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const { clusterName, serviceName } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
-    const networkTxBytesMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'NetworkTxBytes',
-        label: 'NetworkTxBytes',
-        dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-        statistic: 'Average',
-    });
+    const namespace = 'ECS/ContainerInsights';
 
-    const networkRxBytesMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'NetworkRxBytes',
-        label: 'NetworkRxBytes',
+    const networkTxBytesMetric = new MetricBuilder({
+        namespace,
+        metricName: 'NetworkTxBytes',
         dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('NetworkTxBytes');
 
-    const storageWriteBytesMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'StorageWriteBytes',
-        label: 'StorageWriteBytes',
+    const networkRxBytesMetric = new MetricBuilder({
+        namespace,
+        metricName: 'NetworkRxBytes',
         dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('NetworkRxBytes');
 
-    const storageReadBytesMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'StorageReadBytes',
-        label: 'StorageReadBytes',
+    const storageWriteBytesMetric = new MetricBuilder({
+        namespace,
+        metricName: 'StorageWriteBytes',
         dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('StorageWriteBytes');
+
+    const storageReadBytesMetric = new MetricBuilder({
+        namespace,
+        metricName: 'StorageReadBytes',
+        dimensions: { ClusterName: clusterName, ServiceName: serviceName },
+    })
+        .stat('Average')
+        .label('StorageReadBytes');
 
     return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Network Rate',
-            width: 12,
-            height: 6,
-            metrics: [
-                networkTxBytesMetric.withPeriod(longPeriod),
-                networkRxBytesMetric.withPeriod(longPeriod),
-            ],
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Storage Rate',
-            width: 12,
-            height: 6,
-            metrics: [
-                storageWriteBytesMetric.withPeriod(longPeriod),
-                storageReadBytesMetric.withPeriod(longPeriod),
-            ],
-        }),
+        new MetricWidgetBuilder()
+            .title('Network Rate')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .addMetric(networkTxBytesMetric.period(longPeriod).build())
+            .addMetric(networkRxBytesMetric.period(longPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title('Storage Rate')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .addMetric(storageWriteBytesMetric.period(longPeriod).build())
+            .addMetric(storageReadBytesMetric.period(longPeriod).build())
+            .build(),
     ];
 }

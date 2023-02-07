@@ -1,63 +1,64 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { TargetGroupConfig, WidgetExtraConfigs } from '../../../types';
+import { Widget, TargetGroupConfig, WidgetExtraConfigs } from '../../../types';
+import { HorizontalAnnotationBuilder, MetricBuilder, MetricWidgetBuilder } from '../../builders';
 
 export function latencyAndRequestCount(
     configs: TargetGroupConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const { loadBalancer, targetGroup } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
-    const targetResponseTimeMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ApplicationELB',
-        name: 'TargetResponseTime',
+    const namespace = 'AWS/ApplicationELB';
+
+    const targetResponseTimeMetric = new MetricBuilder({
+        namespace,
+        metricName: 'TargetResponseTime',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
     });
 
-    const requestCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ApplicationELB',
-        name: 'RequestCount',
-        label: 'RequestCount',
+    const requestCountMetric = new MetricBuilder({
+        namespace,
+        metricName: 'RequestCount',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-        statistic: 'Sum',
-    });
+    })
+        .stat('Sum')
+        .label('RequestCount');
 
-    const httpCodeTarget5xxCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ApplicationELB',
-        name: 'HTTPCode_Target_5XX_Count',
-        label: 'HTTPCode_Target_5XX_Count',
+    const httpCodeTarget5xxCountMetric = new MetricBuilder({
+        namespace,
+        metricName: 'HTTPCode_Target_5XX_Count',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-        statistic: 'Sum',
-    });
+    })
+        .stat('Sum')
+        .label('HTTPCode_Target_5XX_Count');
 
-    const httpCodeTarget4xxCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ApplicationELB',
-        name: 'HTTPCode_Target_4XX_Count',
-        label: 'HTTPCode_Target_4XX_Count',
+    const httpCodeTarget4xxCountMetric = new MetricBuilder({
+        namespace,
+        metricName: 'HTTPCode_Target_4XX_Count',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-        statistic: 'Sum',
-    });
+    })
+        .stat('Sum')
+        .label('HTTPCode_Target_4XX_Count');
 
-    const httpCodeTarget3xxCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ApplicationELB',
-        name: 'HTTPCode_Target_3XX_Count',
-        label: 'HTTPCode_Target_3XX_Count',
+    const httpCodeTarget3xxCountMetric = new MetricBuilder({
+        namespace,
+        metricName: 'HTTPCode_Target_3XX_Count',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-        statistic: 'Sum',
-    });
+    })
+        .stat('Sum')
+        .label('HTTPCode_Target_3XX_Count');
 
-    const httpCodeTarget2xxCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ApplicationELB',
-        name: 'HTTPCode_Target_2XX_Count',
-        label: 'HTTPCode_Target_2XX_Count',
+    const httpCodeTarget2xxCountMetric = new MetricBuilder({
+        namespace,
+        metricName: 'HTTPCode_Target_2XX_Count',
         dimensions: { LoadBalancer: loadBalancer, TargetGroup: targetGroup },
-        statistic: 'Sum',
-    });
+    })
+        .stat('Sum')
+        .label('HTTPCode_Target_2XX_Count');
 
     const latencyWarning = 0.3;
     const latencyAlarm = 0.5;
@@ -65,61 +66,77 @@ export function latencyAndRequestCount(
     const warningColor = '#ff7f0e';
     const alarmColor = '#d62728';
 
-    const annotations = [
-        new awsx.cloudwatch.HorizontalAnnotation({
-            aboveEdge: { label: 'In warning', value: latencyWarning },
-            color: warningColor,
-        }),
-        new awsx.cloudwatch.HorizontalAnnotation({
-            aboveEdge: { label: 'In alarm', value: latencyAlarm },
-            color: alarmColor,
-        }),
-    ];
+    const warningAnnotation = new HorizontalAnnotationBuilder({ value: latencyWarning })
+        .color(warningColor)
+        .label('In warning')
+        .build();
+    const alarmAnnotation = new HorizontalAnnotationBuilder({ value: latencyAlarm })
+        .color(alarmColor)
+        .label('In alarm')
+        .build();
 
     return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Target Group Latency',
-            width: 12,
-            height: 6,
-            annotations,
-            metrics: [
+        new MetricWidgetBuilder()
+            .title('Target Group Latency')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .addHorizontalAnnotation(warningAnnotation)
+            .addHorizontalAnnotation(alarmAnnotation)
+            .addMetric(
                 targetResponseTimeMetric
-                    .withPeriod(longPeriod)
-                    .withStatistic('Minimum')
-                    .withLabel('TargetResponseTime Minimum'),
+                    .period(longPeriod)
+                    .stat('Minimum')
+                    .label('TargetResponseTime Minimum')
+                    .build()
+            )
+            .addMetric(
                 targetResponseTimeMetric
-                    .withPeriod(longPeriod)
-                    .withStatistic('Average')
-                    .withLabel('TargetResponseTime Average'),
+                    .period(longPeriod)
+                    .stat('Average')
+                    .label('TargetResponseTime Average')
+                    .build()
+            )
+            .addMetric(
                 targetResponseTimeMetric
-                    .withPeriod(longPeriod)
-                    .withStatistic('Maximum')
-                    .withLabel('TargetResponseTime Maximum'),
+                    .period(longPeriod)
+                    .stat('Maximum')
+                    .label('TargetResponseTime Maximum')
+                    .build()
+            )
+            .addMetric(
                 targetResponseTimeMetric
-                    .withPeriod(longPeriod)
-                    .withExtendedStatistic(50)
-                    .withLabel('TargetResponseTime p50'),
+                    .period(longPeriod)
+                    .stat('p50')
+                    .label('TargetResponseTime p50')
+                    .build()
+            )
+            .addMetric(
                 targetResponseTimeMetric
-                    .withPeriod(longPeriod)
-                    .withExtendedStatistic(90)
-                    .withLabel('TargetResponseTime p90'),
+                    .period(longPeriod)
+                    .stat('p90')
+                    .label('TargetResponseTime p90')
+                    .build()
+            )
+            .addMetric(
                 targetResponseTimeMetric
-                    .withPeriod(longPeriod)
-                    .withExtendedStatistic(99)
-                    .withLabel('TargetResponseTime p99'),
-            ],
-        }),
-        new awsx.cloudwatch.StackedAreaGraphMetricWidget({
-            title: 'Request Count',
-            width: 12,
-            height: 6,
-            metrics: [
-                requestCountMetric.withPeriod(longPeriod).withYAxis('right'),
-                httpCodeTarget5xxCountMetric.withPeriod(longPeriod),
-                httpCodeTarget4xxCountMetric.withPeriod(longPeriod),
-                httpCodeTarget3xxCountMetric.withPeriod(longPeriod),
-                httpCodeTarget2xxCountMetric.withPeriod(longPeriod),
-            ],
-        }),
+                    .period(longPeriod)
+                    .stat('p99')
+                    .label('TargetResponseTime p99')
+                    .build()
+            )
+            .build(),
+        new MetricWidgetBuilder()
+            .title('Request Count')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .stacked(true)
+            .addMetric(requestCountMetric.period(longPeriod).yAxis('right').build())
+            .addMetric(httpCodeTarget5xxCountMetric.period(longPeriod).build())
+            .addMetric(httpCodeTarget4xxCountMetric.period(longPeriod).build())
+            .addMetric(httpCodeTarget3xxCountMetric.period(longPeriod).build())
+            .addMetric(httpCodeTarget2xxCountMetric.period(longPeriod).build())
+            .build(),
     ];
 }

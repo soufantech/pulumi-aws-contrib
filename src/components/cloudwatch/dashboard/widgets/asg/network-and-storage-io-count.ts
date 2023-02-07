@@ -1,67 +1,65 @@
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { AsgConfig, WidgetExtraConfigs } from '../../../types';
+import { Widget, AsgConfig, WidgetExtraConfigs } from '../../../types';
+import { MetricBuilder, MetricWidgetBuilder } from '../../builders';
 
 export function networkAndStorageIoCount(
     configs: AsgConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const { asgName } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
-    const networkPacketsOutMetric = new awsx.cloudwatch.Metric({
+    const networkPacketsOutMetric = new MetricBuilder({
         namespace: 'AWS/EC2',
-        name: 'NetworkPacketsOut',
-        label: 'NetworkPacketsOut',
+        metricName: 'NetworkPacketsOut',
         dimensions: { AutoScalingGroupName: asgName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('NetworkPacketsOut');
 
-    const networkPacketsInMetric = new awsx.cloudwatch.Metric({
+    const networkPacketsInMetric = new MetricBuilder({
         namespace: 'AWS/EC2',
-        name: 'NetworkPacketsIn',
-        label: 'NetworkPacketsIn',
+        metricName: 'NetworkPacketsIn',
         dimensions: { AutoScalingGroupName: asgName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('NetworkPacketsIn');
 
-    const ebsWriteOpsMetric = new awsx.cloudwatch.Metric({
+    const ebsWriteOpsMetric = new MetricBuilder({
         namespace: 'AWS/EC2',
-        name: 'EBSWriteOps',
-        label: 'EBSWriteOps',
+        metricName: 'EBSWriteOps',
         dimensions: { AutoScalingGroupName: asgName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('EBSWriteOps');
 
-    const ebsReadOpsMetric = new awsx.cloudwatch.Metric({
+    const ebsReadOpsMetric = new MetricBuilder({
         namespace: 'AWS/EC2',
-        name: 'EBSReadOps',
-        label: 'EBSReadOps',
+        metricName: 'EBSReadOps',
         dimensions: { AutoScalingGroupName: asgName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('EBSReadOps');
 
     return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Network IO (count)',
-            width: 12,
-            height: 6,
-            metrics: [
-                networkPacketsOutMetric.withPeriod(longPeriod),
-                networkPacketsInMetric.withPeriod(longPeriod),
-            ],
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Storage IO (count)',
-            width: 12,
-            height: 6,
-            metrics: [
-                ebsWriteOpsMetric.withPeriod(longPeriod),
-                ebsReadOpsMetric.withPeriod(longPeriod),
-            ],
-        }),
+        new MetricWidgetBuilder()
+            .title('Network IO (count)')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .addMetric(networkPacketsOutMetric.period(longPeriod).build())
+            .addMetric(networkPacketsInMetric.period(longPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title('Storage IO (count)')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .addMetric(ebsWriteOpsMetric.period(longPeriod).build())
+            .addMetric(ebsReadOpsMetric.period(longPeriod).build())
+            .build(),
     ];
 }
