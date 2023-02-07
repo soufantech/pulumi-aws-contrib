@@ -9,7 +9,10 @@ import {
     TextWidgetBuilder,
 } from '../../builders';
 
-export function sqs(queues?: string[], extraConfigs?: WidgetExtraConfigs): pulumi.Output<Widget>[] {
+export function sqs(
+    queues?: pulumi.Input<string>[],
+    extraConfigs?: WidgetExtraConfigs
+): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
