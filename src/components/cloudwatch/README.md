@@ -9,6 +9,7 @@ alarm/
   create-alarm-command.ts
   alarm-store.ts
 dashboard/
+  builders/
   widgets/
   dashboard-builder.ts
 ```
@@ -61,7 +62,31 @@ The store is responsible for managing the list of created `alarms`, adding or re
 Dashboards
 ----------
 
-_Missing documentation_
+### Abstraction overview
+
+```
+dashboard > widget > metric|alarm|log|text
+```
+
+### Widget
+
+```
+(widget) ---> MetricWidgetBuilder ---> (metrics) ---> MetricBuilder ---> (metric)
+          |                        |              |-> ExpressionBuilder ---> (expression)
+          |                        |
+          |                        |-> (annotations) ----> AlarmAnnotationBuilder
+          |                                            |-> HorizontalAnnotationBuilder
+          |                                            |-> VerticalAnnotationBuilder
+          |-> AlarmWidgetBuilder ---> (alarm ARNs)
+          |-> LogWidgetBuilder ---> (log insights)
+          |-> TextWidgetBuilder ---> (markdown text)
+```
+
+The `widget` represents the expected result, that is, the object that will be passed to the `dashboard` creation.
+
+The first level of `builders` are responsible for creating different `widget` types.
+
+The other `builders` are utilities to help configure the metric `builder`.
 
 Problem fix
 -----------
