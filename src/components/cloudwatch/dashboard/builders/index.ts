@@ -1,3 +1,6 @@
+// Dashboard Buider
+export { DashboardBuilder } from './dashboard-builder';
+
 // Widget Builders
 export { AlarmWidgetBuilder } from './alarm-widget-builder';
 export { LogWidgetBuilder } from './log-widget-builder';

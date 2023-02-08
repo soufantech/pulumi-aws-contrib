@@ -1,4 +1,4 @@
 export * from './builders';
 export * from './widgets';
 
-export { DashboardBuilder } from './dashboard-builder';
+export { DashboardBuilder } from './builders/dashboard-builder';
