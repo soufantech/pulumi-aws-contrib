@@ -45,6 +45,7 @@ function instanceAndTaskCount(
 ): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const namespaceAutoScaling = 'AWS/AutoScaling';
 
@@ -72,7 +73,7 @@ function instanceAndTaskCount(
             .title('Instance Count Status')
             .view('singleValue')
             .width(3)
-            .height(6)
+            .height(height)
             .addMetric(asgInServiceInstancesMetric.period(shortPeriod).build())
             .addMetric(runningTaskCountMetric.period(shortPeriod).build())
             .build(),
@@ -80,7 +81,7 @@ function instanceAndTaskCount(
             .title(pulumi.interpolate`Instance Count History (${asgName})`)
             .view('timeSeries')
             .width(9)
-            .height(6)
+            .height(height)
             .addMetric(asgDesiredCapacityMetric.period(longPeriod).build())
             .addMetric(asgInServiceInstancesMetric.period(longPeriod).build())
             .build(),
@@ -88,7 +89,7 @@ function instanceAndTaskCount(
             .title(pulumi.interpolate`Task Count History (${clusterName})`)
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addMetric(desiredTaskCountMetric.period(longPeriod).build())
             .addMetric(pendingTaskCountMetric.period(longPeriod).build())
             .addMetric(runningTaskCountMetric.period(longPeriod).build())
@@ -103,6 +104,7 @@ function onlyTaskCount(
 ): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const [desiredTaskCountMetric, pendingTaskCountMetric, runningTaskCountMetric] =
         createContainerMetrics(clusterName, serviceName);
@@ -112,14 +114,14 @@ function onlyTaskCount(
             .title('Task Count Status')
             .view('singleValue')
             .width(3)
-            .height(5)
+            .height(height)
             .addMetric(runningTaskCountMetric.period(shortPeriod).build())
             .build(),
         new MetricWidgetBuilder()
             .title(pulumi.interpolate`Task Count History (${clusterName})`)
             .view('timeSeries')
             .width(21)
-            .height(5)
+            .height(height)
             .addMetric(desiredTaskCountMetric.period(longPeriod).build())
             .addMetric(pendingTaskCountMetric.period(longPeriod).build())
             .addMetric(runningTaskCountMetric.period(longPeriod).build())

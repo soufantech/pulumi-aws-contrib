@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
@@ -13,6 +12,7 @@ export function uptimeAndHealthy(
 
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const namespace = 'AWS/ApplicationELB';
 
@@ -65,7 +65,7 @@ export function uptimeAndHealthy(
             .title('Uptime Status')
             .view('singleValue')
             .width(3)
-            .height(5)
+            .height(height)
             .period(shortPeriod)
             .addMetric(requestCountMetric.id('m1').period(shortPeriod).visible(false).build())
             .addMetric(
@@ -77,8 +77,9 @@ export function uptimeAndHealthy(
             .title('Uptime History')
             .view('timeSeries')
             .width(9)
-            .height(5)
+            .height(height)
             .period(longPeriod)
+            .yAxis({ left: { max: 100 } })
             .addMetric(requestCountMetric.id('m1').period(longPeriod).visible(false).build())
             .addMetric(
                 httpCodeTarget5xxCountMetric.id('m2').period(longPeriod).visible(false).build()
@@ -88,8 +89,8 @@ export function uptimeAndHealthy(
         new MetricWidgetBuilder()
             .title('Healthy Status')
             .view('singleValue')
-            .width(6)
-            .height(5)
+            .width(3)
+            .height(height)
             .period(shortPeriod)
             .addMetric(healthyHostCountMetric.period(shortPeriod).build())
             .addMetric(unhealthyHostCountMetric.period(shortPeriod).build())
@@ -97,9 +98,10 @@ export function uptimeAndHealthy(
         new MetricWidgetBuilder()
             .title('Healthy History')
             .view('timeSeries')
-            .width(6)
-            .height(5)
+            .width(9)
+            .height(height)
             .period(longPeriod)
+            .yAxis({ left: { max: 100 } })
             .addMetric(healthyHostCountMetric.id('m1').period(longPeriod).visible(false).build())
             .addMetric(unhealthyHostCountMetric.id('m2').period(longPeriod).visible(false).build())
             .addMetric(healthyRateExpression.build())

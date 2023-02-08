@@ -35,6 +35,7 @@ function instanceAndTaskCount(
     extraConfigs?: WidgetExtraConfigs
 ): pulumi.Output<Widget>[] {
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const asgInServiceInstancesMetrics = instances.map((instance) =>
         new MetricBuilder({
@@ -53,7 +54,7 @@ function instanceAndTaskCount(
         .title('Instance Count History')
         .view('timeSeries')
         .width(12)
-        .height(6)
+        .height(height)
         .period(longPeriod);
     asgInServiceInstancesMetrics.forEach((metric) =>
         asgInServiceInstancesWidget.addMetric(metric.build())
@@ -63,7 +64,7 @@ function instanceAndTaskCount(
         .title('Task Count History')
         .view('timeSeries')
         .width(12)
-        .height(6)
+        .height(height)
         .period(longPeriod);
     runningTaskCountMetrics.forEach((metric) => runningTaskCountWidget.addMetric(metric.build()));
 
@@ -75,6 +76,7 @@ function onlyTaskCount(
     extraConfigs?: WidgetExtraConfigs
 ): pulumi.Output<Widget>[] {
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const runningTaskCountMetrics = createContainerMetrics(services, longPeriod);
 
@@ -82,7 +84,7 @@ function onlyTaskCount(
         .title('Task Count History')
         .view('timeSeries')
         .width(24)
-        .height(6)
+        .height(height)
         .period(longPeriod);
     runningTaskCountMetrics.forEach((metric) => runningTaskCountWidget.addMetric(metric.build()));
 

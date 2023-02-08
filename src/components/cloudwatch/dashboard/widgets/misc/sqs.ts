@@ -15,6 +15,7 @@ export function sqs(
 ): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const namespace = 'AWS/SQS';
 
@@ -92,7 +93,7 @@ export function sqs(
                     .title('Unprocessed Status')
                     .view('singleValue')
                     .width(3)
-                    .height(6)
+                    .height(height)
                     .addMetric(ageOfOldestMessageMetric.period(shortPeriod).build())
                     .addMetric(numberOfMessagesVisibleMetric.period(shortPeriod).build())
                     .build(),
@@ -100,7 +101,7 @@ export function sqs(
                     .title('Queue Health Status')
                     .view('singleValue')
                     .width(3)
-                    .height(6)
+                    .height(height)
                     .addMetric(
                         numberOfMessagesSentMetric
                             .id('m1')
@@ -121,7 +122,7 @@ export function sqs(
                 new MetricWidgetBuilder()
                     .title('Sent x Received x Deleted')
                     .width(9)
-                    .height(6)
+                    .height(height)
                     .addMetric(numberOfMessagesSentMetric.period(longPeriod).build())
                     .addMetric(numberOfMessagesReceivedMetric.period(longPeriod).build())
                     .addMetric(numberOfMessagesDeletedMetric.period(longPeriod).build())
@@ -129,7 +130,7 @@ export function sqs(
                 new MetricWidgetBuilder()
                     .title('Empty Receives')
                     .width(9)
-                    .height(6)
+                    .height(height)
                     .addMetric(numberOfEmptyReceivesMetric.period(longPeriod).build())
                     .build(),
             ];

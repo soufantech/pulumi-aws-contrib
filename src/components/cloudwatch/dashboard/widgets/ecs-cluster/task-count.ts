@@ -31,6 +31,7 @@ function instanceAndTaskCount(
 ): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const asgInServiceInstancesMetric = new MetricBuilder({
         namespace: 'AWS/AutoScaling',
@@ -63,7 +64,7 @@ function instanceAndTaskCount(
             .title('Instance Count Status')
             .view('singleValue')
             .width(3)
-            .height(6)
+            .height(height)
             .period(shortPeriod)
             .addMetric(asgInServiceInstancesMetric.period(shortPeriod).build())
             .addMetric(asgMaxSizeMetric.period(shortPeriod).build())
@@ -72,7 +73,7 @@ function instanceAndTaskCount(
             .title(pulumi.interpolate`Instance Count History (${asgName})`)
             .view('timeSeries')
             .width(9)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .addMetric(asgDesiredCapacityMetric.period(longPeriod).build())
             .addMetric(asgInServiceInstancesMetric.period(longPeriod).build())
@@ -81,7 +82,7 @@ function instanceAndTaskCount(
             .title('Task Count Status')
             .view('singleValue')
             .width(3)
-            .height(6)
+            .height(height)
             .period(shortPeriod)
             .addMetric(serviceCountMetric.period(shortPeriod).build())
             .addMetric(taskCountMetric.period(shortPeriod).build())
@@ -90,7 +91,7 @@ function instanceAndTaskCount(
             .title(pulumi.interpolate`Task Count History (${clusterName})`)
             .view('timeSeries')
             .width(9)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .addMetric(taskCountMetric.period(longPeriod).build())
             .build(),
@@ -103,6 +104,7 @@ function onlyTaskCount(
 ): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const [serviceCountMetric, taskCountMetric] = createContainerMetrics(clusterName);
 
@@ -111,7 +113,7 @@ function onlyTaskCount(
             .title('Task Count Status')
             .view('singleValue')
             .width(3)
-            .height(6)
+            .height(height)
             .period(shortPeriod)
             .addMetric(serviceCountMetric.period(shortPeriod).build())
             .addMetric(taskCountMetric.period(shortPeriod).build())
@@ -120,7 +122,7 @@ function onlyTaskCount(
             .title(pulumi.interpolate`Task Count History (${clusterName})`)
             .view('timeSeries')
             .width(21)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .addMetric(taskCountMetric.period(longPeriod).build())
             .build(),

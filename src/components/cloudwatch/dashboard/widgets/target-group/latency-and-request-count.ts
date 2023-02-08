@@ -11,6 +11,7 @@ export function latencyAndRequestCount(
     const { loadBalancer, targetGroup } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const namespace = 'AWS/ApplicationELB';
 
@@ -80,7 +81,7 @@ export function latencyAndRequestCount(
             .title('Target Group Latency')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addHorizontalAnnotation(warningAnnotation)
             .addHorizontalAnnotation(alarmAnnotation)
             .addMetric(
@@ -130,7 +131,7 @@ export function latencyAndRequestCount(
             .title('Request Count')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .stacked(true)
             .addMetric(requestCountMetric.period(longPeriod).yAxis('right').build())
             .addMetric(httpCodeTarget5xxCountMetric.period(longPeriod).build())

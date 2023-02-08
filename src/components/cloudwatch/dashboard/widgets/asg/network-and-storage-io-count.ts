@@ -11,6 +11,7 @@ export function networkAndStorageIoCount(
     const { asgName } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const networkPacketsOutMetric = new MetricBuilder({
         namespace: 'AWS/EC2',
@@ -49,7 +50,7 @@ export function networkAndStorageIoCount(
             .title('Network IO (count)')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addMetric(networkPacketsOutMetric.period(longPeriod).build())
             .addMetric(networkPacketsInMetric.period(longPeriod).build())
             .build(),
@@ -57,7 +58,7 @@ export function networkAndStorageIoCount(
             .title('Storage IO (count)')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addMetric(ebsWriteOpsMetric.period(longPeriod).build())
             .addMetric(ebsReadOpsMetric.period(longPeriod).build())
             .build(),

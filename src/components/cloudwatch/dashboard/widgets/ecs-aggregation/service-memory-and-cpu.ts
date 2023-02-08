@@ -11,6 +11,7 @@ export function serviceMemoryAndCpu(
     const { services } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const serviceConfigs = services.map((service) => service.serviceConfig);
 
@@ -46,7 +47,7 @@ export function serviceMemoryAndCpu(
         .title('Service Memory Utilization')
         .view('timeSeries')
         .width(12)
-        .height(6)
+        .height(height)
         .period(longPeriod);
     memoryUtilizationMetrics.forEach((metric) => memoryUtilizationWidget.addMetric(metric.build()));
 
@@ -54,7 +55,7 @@ export function serviceMemoryAndCpu(
         .title('Service CPU Utilization')
         .view('timeSeries')
         .width(12)
-        .height(6)
+        .height(height)
         .period(longPeriod);
     cpuUtilizationMetrics.forEach((metric) => cpuUtilizationWidget.addMetric(metric.build()));
 

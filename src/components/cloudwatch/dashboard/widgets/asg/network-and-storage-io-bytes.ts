@@ -11,6 +11,7 @@ export function networkAndStorageIoBytes(
     const { asgName } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const networkOutMetric = new MetricBuilder({
         namespace: 'AWS/EC2',
@@ -49,7 +50,7 @@ export function networkAndStorageIoBytes(
             .title('Network IO (bytes)')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addMetric(networkOutMetric.period(longPeriod).build())
             .addMetric(networkInMetric.period(longPeriod).build())
             .build(),
@@ -57,7 +58,7 @@ export function networkAndStorageIoBytes(
             .title('Storage IO (bytes)')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addMetric(ebsWriteBytesMetric.period(longPeriod).build())
             .addMetric(ebsReadBytesMetric.period(longPeriod).build())
             .build(),

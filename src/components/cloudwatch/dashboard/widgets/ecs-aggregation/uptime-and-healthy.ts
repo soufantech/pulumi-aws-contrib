@@ -17,6 +17,7 @@ export function uptimeAndHealthy(
     const { services } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const namespace = 'AWS/ApplicationELB';
 
@@ -139,7 +140,7 @@ export function uptimeAndHealthy(
             .title('Uptime History')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .yAxis({ left: { max: 100 } });
         uptimeHistoryMetrics.forEach((metric) => uptimeHistoryWidget.addMetric(metric));
@@ -148,7 +149,7 @@ export function uptimeAndHealthy(
             .title('Healthy History')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .yAxis({ left: { max: 100 } });
         healthyHistoryMetrics.forEach((metric) => healthyHistoryWidget.addMetric(metric));

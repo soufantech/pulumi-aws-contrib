@@ -11,6 +11,7 @@ export function memoryAndCpu(
     const { clusterName } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const memoryUtilizationMetric = new MetricBuilder({
         namespace: 'AWS/ECS',
@@ -45,7 +46,7 @@ export function memoryAndCpu(
             .title('Memory Utilization')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .addMetric(memoryUtilizationMetric.id('m1').period(longPeriod).build())
             .addMetric(memoryAnomalyDetectionExpression.build())
@@ -54,7 +55,7 @@ export function memoryAndCpu(
             .title('CPU Utilization')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .addMetric(cpuUtilizationMetric.id('m1').period(longPeriod).build())
             .addMetric(cpuAnomalyDetectionExpression.build())

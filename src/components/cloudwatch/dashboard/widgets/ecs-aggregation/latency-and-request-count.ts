@@ -16,6 +16,7 @@ export function latencyAndRequestCount(
     const { services } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const albConfigsOutput = services
         .map((service) => service.targetGroupConfig)
@@ -77,7 +78,7 @@ export function latencyAndRequestCount(
             .title('Target Group Latency')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .period(longPeriod)
             .addHorizontalAnnotation(warningAnnotation)
             .addHorizontalAnnotation(alarmAnnotation);
@@ -89,7 +90,7 @@ export function latencyAndRequestCount(
             .title('Request Count')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .period(longPeriod);
         requestCountMetrics.forEach((metric) => {
             requestCountWidget.addMetric(metric.build());

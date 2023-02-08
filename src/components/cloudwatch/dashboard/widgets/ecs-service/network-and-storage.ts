@@ -11,6 +11,7 @@ export function networkAndStorage(
     const { clusterName, serviceName } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const namespace = 'ECS/ContainerInsights';
 
@@ -51,7 +52,7 @@ export function networkAndStorage(
             .title('Network Rate')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addMetric(networkTxBytesMetric.period(longPeriod).build())
             .addMetric(networkRxBytesMetric.period(longPeriod).build())
             .build(),
@@ -59,7 +60,7 @@ export function networkAndStorage(
             .title('Storage Rate')
             .view('timeSeries')
             .width(12)
-            .height(6)
+            .height(height)
             .addMetric(storageWriteBytesMetric.period(longPeriod).build())
             .addMetric(storageReadBytesMetric.period(longPeriod).build())
             .build(),

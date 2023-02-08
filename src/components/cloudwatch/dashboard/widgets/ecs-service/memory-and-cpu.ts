@@ -12,6 +12,7 @@ export function memoryAndCpu(
 
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const namespaceEcsInsights = 'ECS/ContainerInsights';
     const namespaceEcsClassic = 'AWS/ECS';
@@ -81,7 +82,7 @@ export function memoryAndCpu(
             .title('Memory Status')
             .view('singleValue')
             .width(3)
-            .height(6)
+            .height(height)
             .addMetric(memoryReservedMetric.period(shortPeriod).build())
             .addMetric(memoryUtilizedMetric.period(shortPeriod).build())
             .build(),
@@ -89,7 +90,7 @@ export function memoryAndCpu(
             .title('Memory Utilization')
             .view('timeSeries')
             .width(9)
-            .height(6)
+            .height(height)
             .addMetric(memoryUtilizationMetric.id('m1').period(longPeriod).build())
             .addMetric(memoryAnomalyDetectionExpression.build())
             .build(),
@@ -97,7 +98,7 @@ export function memoryAndCpu(
             .title('CPU Status')
             .view('singleValue')
             .width(3)
-            .height(6)
+            .height(height)
             .addMetric(cpuReservedMetric.period(shortPeriod).build())
             .addMetric(cpuUtilizedMetric.period(shortPeriod).build())
             .build(),
@@ -105,7 +106,7 @@ export function memoryAndCpu(
             .title('CPU Utilization')
             .view('timeSeries')
             .width(9)
-            .height(6)
+            .height(height)
             .addMetric(cpuUtilizationMetric.id('m1').period(longPeriod).build())
             .addMetric(cpuAnomalyDetectionExpression.build())
             .build(),
