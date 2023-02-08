@@ -11,11 +11,10 @@ alarm/
 dashboard/
   builders/
   widgets/
-  dashboard-builder.ts
 ```
 
-Alarms
-------
+Alarm
+-----
 
 ### Abstraction overview
 
@@ -59,8 +58,33 @@ The `store` is an object that contains the `alarms` created by the `command`.
 
 The store is responsible for managing the list of created `alarms`, adding or removing according to the `commands` passed.
 
-Dashboards
-----------
+### Component list
+
+- AsgAlarmCommands
+  - AsgMaxSize
+- EcsClusterAlarmCommands
+  - CpuUtilization
+  - MemoryUtilization
+  - NetworkBytes
+  - StorageBytes
+- EcsServiceAlarmCommands
+  - CpuUtilization
+  - MemoryUtilization
+  - NetworkBytes
+  - StorageBytes
+- RdsAlarmCommands
+  - BurstBalance
+  - CpuUtilization
+  - DatabaseConnections
+  - FreeStorageSpace
+  - FreeableMemory
+- TgAlarmCommands
+  - RequestCount
+  - TargetResponseTime
+  - Uptime
+
+Dashboard
+---------
 
 ### Abstraction overview
 
@@ -90,7 +114,13 @@ The other `builders` are utilities to help configure the metric `builder`.
 
 ### Widget Sets
 
-To facilitate the construction of the dashboard, some sets of widgets are available where each set represents a row of the dashboard.
+To facilitate the construction of the `dashboard`, some sets of `widgets` are available where each set represents a row of the `dashboard`.
+
+### Dashboard Builder
+
+The dashboard `builder` receives a ordered list of `widgets` and creates a `dashboard` with them.
+
+### Component list
 
 - asgWidgets (Auto Scaling Group)
   - networkAndStorageIoBytes
@@ -116,10 +146,6 @@ To facilitate the construction of the dashboard, some sets of widgets are availa
   - latencyAndRequestCount
   - uptimeAndHealthy
 
-### Dashboard Builder
-
-The dashboard `builder` receives a ordered list of `widgets` and creates a `dashboard` with them.
-
 How to contribute
 -----------------
 
@@ -130,39 +156,3 @@ _Missing documentation_
 ### Create a new widget
 
 _Missing documentation_
-
-### Index file
-
-**Export funcions**
-  
-```typescript
-export { memoryAndCpuExtra } from './create-memory-and-cpu-extra-widgets';
-```
-
-**Export classes**
-
-```typescript
-export { CpuUtilization } from './create-cpu-utilization-alarm';
-```
-
-**Export interfaces**
-
-```typescript
-export { CreateParameterStorePolicyArgs } from './parameter-store';
-```
-
-**Export grouped resources**
-
-```typescript
-import * as policyFactories from './policy-factories';
-
-export {
-    policyFactories,
-};
-```
-
-**Forwards exports to upper level**
-
-```typescript
-export * from './utils';
-```
