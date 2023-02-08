@@ -39,6 +39,10 @@ export class AlarmWidgetBuilder extends WidgetBuilder {
     }
 
     build(): pulumi.Output<Widget> {
+        if (!this.properties.alarms.length) {
+            throw new Error('Alarms must not be empty');
+        }
+
         const widget: Widget = {
             ...this.widgetAttributes,
             properties: this.properties,

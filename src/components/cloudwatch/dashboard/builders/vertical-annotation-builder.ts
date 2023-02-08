@@ -59,6 +59,14 @@ export class VerticalAnnotationBuilder {
     }
 
     build(): SingleVerticalAnnotation | BandedVerticalAnnotation {
+        if (!this.annotation.value) {
+            throw new Error('Annotation value must be provided');
+        }
+
+        if (this.bandAnnotation && !this.bandAnnotation.value) {
+            throw new Error('Band annotation value must be provided');
+        }
+
         if (this.bandAnnotation) {
             return [{ ...this.annotation }, { ...this.bandAnnotation }];
         }

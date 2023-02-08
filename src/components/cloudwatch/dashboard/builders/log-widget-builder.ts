@@ -40,6 +40,10 @@ export class LogWidgetBuilder extends WidgetBuilder {
     }
 
     build(): pulumi.Output<Widget> {
+        if (!this.properties.query) {
+            throw new Error('Query must not be empty');
+        }
+
         const widget: Widget = {
             ...this.widgetAttributes,
             properties: this.properties,

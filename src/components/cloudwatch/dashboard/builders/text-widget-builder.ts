@@ -22,6 +22,10 @@ export class TextWidgetBuilder extends WidgetBuilder {
     }
 
     build(): pulumi.Output<Widget> {
+        if (!this.properties.markdown) {
+            throw new Error('Markdown must not be empty');
+        }
+
         const widget: Widget = {
             ...this.widgetAttributes,
             properties: this.properties,

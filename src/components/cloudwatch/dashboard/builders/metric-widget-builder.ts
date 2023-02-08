@@ -171,6 +171,10 @@ export class MetricWidgetBuilder extends WidgetBuilder {
     }
 
     build(): pulumi.Output<Widget> {
+        if (this.properties.metrics.length === 0) {
+            throw new Error('Must have at least one metric');
+        }
+
         pulumi.output(this.properties.view).apply((v) => {
             if (v === 'gauge' && !this.properties.yAxis) {
                 throw new Error('yAxis must be set when view is gauge');
