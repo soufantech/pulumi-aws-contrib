@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-import { AlarmStoreCommand } from './alarm-store-command';
+import type { AlarmStoreCommand } from './alarm-store-command';
 import { CreateAlarmCommand } from './create-alarm-command';
 
 export class AlarmStore extends pulumi.ComponentResource {
