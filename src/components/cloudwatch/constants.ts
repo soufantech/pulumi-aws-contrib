@@ -8,3 +8,4 @@ export const STANDARD_DEVIATION = 2;
 
 // Dashboard constants
 export const DEFAULT_PERIOD = 60;
+export const DEFAULT_HEIGHT = 6;

@@ -1,13 +1,14 @@
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
 import * as pulumi from '@pulumi/pulumi';
+
+import { Widget } from '../../../types';
+import { AlarmWidgetBuilder } from '../../builders';
 
 interface AlarmConfig {
     mainAlarms?: pulumi.Input<string>[];
     extraAlarms?: pulumi.Input<string>[];
 }
 
-export function alarm(alarmConfig?: AlarmConfig): Widget[] {
+export function alarm(alarmConfig?: AlarmConfig): pulumi.Output<Widget>[] {
     const mainAlarms = alarmConfig?.mainAlarms || [];
     const extraAlarms = alarmConfig?.extraAlarms || [];
 
@@ -22,29 +23,29 @@ export function alarm(alarmConfig?: AlarmConfig): Widget[] {
         height = 4;
     }
 
-    const widgets: Widget[] = [];
+    const widgets: pulumi.Output<Widget>[] = [];
 
     if (mainAlarms.length) {
         widgets.push(
-            new awsx.cloudwatch.AlarmWidget({
-                title: 'Main Alarms',
-                width,
-                height,
-                sortBy: 'stateUpdatedTimestamp',
-                alarms: mainAlarms,
-            })
+            new AlarmWidgetBuilder()
+                .title('Main Alarms')
+                .width(width)
+                .height(height)
+                .sortBy('stateUpdatedTimestamp')
+                .addAlarms(mainAlarms)
+                .build()
         );
     }
 
     if (extraAlarms.length) {
         widgets.push(
-            new awsx.cloudwatch.AlarmWidget({
-                title: 'Extra Alarms',
-                width,
-                height,
-                sortBy: 'stateUpdatedTimestamp',
-                alarms: extraAlarms,
-            })
+            new AlarmWidgetBuilder()
+                .title('Extra Alarms')
+                .width(width)
+                .height(height)
+                .sortBy('stateUpdatedTimestamp')
+                .addAlarms(extraAlarms)
+                .build()
         );
     }
 

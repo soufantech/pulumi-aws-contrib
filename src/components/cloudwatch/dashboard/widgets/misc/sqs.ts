@@ -1,125 +1,138 @@
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { WidgetExtraConfigs } from '../../../types';
+import { Widget, WidgetExtraConfigs } from '../../../types';
+import {
+    ExpressionBuilder,
+    MetricBuilder,
+    MetricWidgetBuilder,
+    TextWidgetBuilder,
+} from '../../builders';
 
-export function sqs(queues?: string[], extraConfigs?: WidgetExtraConfigs): Widget[] {
+export function sqs(
+    queues?: pulumi.Input<string>[],
+    extraConfigs?: WidgetExtraConfigs
+): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
+
+    const namespace = 'AWS/SQS';
 
     return (queues || [])
         .map((queueName) => {
-            const ageOfOldestMessage = new awsx.cloudwatch.Metric({
-                namespace: 'AWS/SQS',
-                name: 'ApproximateAgeOfOldestMessage',
-                label: 'AgeOfOldestMessage',
+            const ageOfOldestMessageMetric = new MetricBuilder({
+                namespace,
+                metricName: 'ApproximateAgeOfOldestMessage',
                 dimensions: { QueueName: queueName },
-                statistic: 'Maximum',
-            });
+            })
+                .stat('Maximum')
+                .label('AgeOfOldestMessage');
 
-            const numberOfMessagesVisibleMetric = new awsx.cloudwatch.Metric({
-                namespace: 'AWS/SQS',
-                name: 'ApproximateNumberOfMessagesVisible',
-                label: 'NumberOfMessagesVisible',
+            const numberOfMessagesVisibleMetric = new MetricBuilder({
+                namespace,
+                metricName: 'ApproximateNumberOfMessagesVisible',
                 dimensions: { QueueName: queueName },
-                statistic: 'Maximum',
-            });
+            })
+                .stat('Maximum')
+                .label('NumberOfMessagesVisible');
 
-            const sentMessageSizeMetric = new awsx.cloudwatch.Metric({
-                namespace: 'AWS/SQS',
-                name: 'SentMessageSize',
-                label: 'SentMessageSize',
+            const sentMessageSizeMetric = new MetricBuilder({
+                namespace,
+                metricName: 'SentMessageSize',
                 dimensions: { QueueName: queueName },
-                statistic: 'Maximum',
-            });
+            })
+                .stat('Maximum')
+                .label('SentMessageSize');
 
-            const numberOfMessagesSentMetric = new awsx.cloudwatch.Metric({
-                namespace: 'AWS/SQS',
-                name: 'NumberOfMessagesSent',
-                label: 'NumberOfMessagesSent',
+            const numberOfMessagesSentMetric = new MetricBuilder({
+                namespace,
+                metricName: 'NumberOfMessagesSent',
                 dimensions: { QueueName: queueName },
-                statistic: 'Sum',
-            });
+            })
+                .stat('Sum')
+                .label('NumberOfMessagesSent');
 
-            const numberOfMessagesReceivedMetric = new awsx.cloudwatch.Metric({
-                namespace: 'AWS/SQS',
-                name: 'NumberOfMessagesReceived',
-                label: 'NumberOfMessagesReceived',
+            const numberOfMessagesReceivedMetric = new MetricBuilder({
+                namespace,
+                metricName: 'NumberOfMessagesReceived',
                 dimensions: { QueueName: queueName },
-                statistic: 'Sum',
-            });
+            })
+                .stat('Sum')
+                .label('NumberOfMessagesReceived');
 
-            const numberOfMessagesDeletedMetric = new awsx.cloudwatch.Metric({
-                namespace: 'AWS/SQS',
-                name: 'NumberOfMessagesDeleted',
-                label: 'NumberOfMessagesDeleted',
+            const numberOfMessagesDeletedMetric = new MetricBuilder({
+                namespace,
+                metricName: 'NumberOfMessagesDeleted',
                 dimensions: { QueueName: queueName },
-                statistic: 'Sum',
-            });
+            })
+                .stat('Sum')
+                .label('NumberOfMessagesDeleted');
 
-            const receivedToSentRatioExpression = new awsx.cloudwatch.ExpressionWidgetMetric(
-                'm2/m1',
-                'ReceivedToSentRatio',
-                'e1'
-            );
+            const receivedToSentRatioExpression = new ExpressionBuilder({
+                expression: 'm2/m1',
+            })
+                .label('ReceivedToSentRatio')
+                .id('e1');
 
-            const numberOfEmptyReceivesMetric = new awsx.cloudwatch.Metric({
-                namespace: 'AWS/SQS',
-                name: 'NumberOfEmptyReceives',
-                label: 'NumberOfEmptyReceives',
+            const numberOfEmptyReceivesMetric = new MetricBuilder({
+                namespace,
+                metricName: 'NumberOfEmptyReceives',
                 dimensions: { QueueName: queueName },
-                statistic: 'Sum',
-            });
+            })
+                .stat('Sum')
+                .label('NumberOfEmptyReceives');
 
             return [
-                new awsx.cloudwatch.TextWidget({
-                    width: 24,
-                    height: 1,
-                    markdown: `**SQS: ${queueName}**`,
-                }),
-                new awsx.cloudwatch.SingleNumberMetricWidget({
-                    title: 'Unprocessed Status',
-                    width: 3,
-                    height: 6,
-                    metrics: [
-                        ageOfOldestMessage.withPeriod(shortPeriod),
-                        numberOfMessagesVisibleMetric.withPeriod(shortPeriod),
-                    ],
-                }),
-                new awsx.cloudwatch.SingleNumberMetricWidget({
-                    title: 'Queue Health Status',
-                    width: 3,
-                    height: 6,
-                    metrics: [
+                new TextWidgetBuilder()
+                    .width(24)
+                    .height(1)
+                    .markdown(`**SQS: ${queueName}**`)
+                    .build(),
+                new MetricWidgetBuilder()
+                    .title('Unprocessed Status')
+                    .view('singleValue')
+                    .width(3)
+                    .height(height)
+                    .addMetric(ageOfOldestMessageMetric.period(shortPeriod).build())
+                    .addMetric(numberOfMessagesVisibleMetric.period(shortPeriod).build())
+                    .build(),
+                new MetricWidgetBuilder()
+                    .title('Queue Health Status')
+                    .view('singleValue')
+                    .width(3)
+                    .height(height)
+                    .addMetric(
                         numberOfMessagesSentMetric
-                            .withId('m1')
-                            .withPeriod(longPeriod)
-                            .withVisible(false),
+                            .id('m1')
+                            .period(longPeriod)
+                            .visible(false)
+                            .build()
+                    )
+                    .addMetric(
                         numberOfMessagesReceivedMetric
-                            .withId('m2')
-                            .withPeriod(longPeriod)
-                            .withVisible(false),
-                        sentMessageSizeMetric.withId('m3').withPeriod(longPeriod),
-                        receivedToSentRatioExpression,
-                    ],
-                }),
-                new awsx.cloudwatch.LineGraphMetricWidget({
-                    title: 'Sent x Received x Deleted',
-                    width: 9,
-                    height: 6,
-                    metrics: [
-                        numberOfMessagesSentMetric.withPeriod(longPeriod),
-                        numberOfMessagesReceivedMetric.withPeriod(longPeriod),
-                        numberOfMessagesDeletedMetric.withPeriod(longPeriod),
-                    ],
-                }),
-                new awsx.cloudwatch.LineGraphMetricWidget({
-                    title: 'Empty Receives',
-                    width: 9,
-                    height: 6,
-                    metrics: [numberOfEmptyReceivesMetric.withPeriod(longPeriod)],
-                }),
+                            .id('m2')
+                            .period(longPeriod)
+                            .visible(false)
+                            .build()
+                    )
+                    .addMetric(sentMessageSizeMetric.id('m3').period(longPeriod).build())
+                    .addMetric(receivedToSentRatioExpression.build())
+                    .build(),
+                new MetricWidgetBuilder()
+                    .title('Sent x Received x Deleted')
+                    .width(9)
+                    .height(height)
+                    .addMetric(numberOfMessagesSentMetric.period(longPeriod).build())
+                    .addMetric(numberOfMessagesReceivedMetric.period(longPeriod).build())
+                    .addMetric(numberOfMessagesDeletedMetric.period(longPeriod).build())
+                    .build(),
+                new MetricWidgetBuilder()
+                    .title('Empty Receives')
+                    .width(9)
+                    .height(height)
+                    .addMetric(numberOfEmptyReceivesMetric.period(longPeriod).build())
+                    .build(),
             ];
         })
         .flat();

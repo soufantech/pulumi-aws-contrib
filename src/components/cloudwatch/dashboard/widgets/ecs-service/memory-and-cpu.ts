@@ -1,66 +1,114 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { EcsServiceConfig, WidgetExtraConfigs } from '../../../types';
+import { Widget, EcsServiceConfig, WidgetExtraConfigs } from '../../../types';
+import { ExpressionBuilder, MetricBuilder, MetricWidgetBuilder } from '../../builders';
 
 export function memoryAndCpu(
     configs: EcsServiceConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const { clusterName, serviceName } = configs;
 
+    const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
-    const memoryUtilizationMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ECS',
-        name: 'MemoryUtilization',
-        label: 'MemoryUtilization',
+    const namespaceEcsInsights = 'ECS/ContainerInsights';
+    const namespaceEcsClassic = 'AWS/ECS';
+
+    const memoryReservedMetric = new MetricBuilder({
+        namespace: namespaceEcsInsights,
+        metricName: 'MemoryReserved',
         dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('MemoryReserved');
 
-    const memoryAnomalyDetectionExpression = new awsx.cloudwatch.ExpressionWidgetMetric(
-        'ANOMALY_DETECTION_BAND(m1, 2)',
-        'AnomalyDetectionBand',
-        'e1'
-    );
-
-    const cpuUtilizationMetric = new awsx.cloudwatch.Metric({
-        namespace: 'AWS/ECS',
-        name: 'CPUUtilization',
-        label: 'CPUUtilization',
+    const memoryUtilizedMetric = new MetricBuilder({
+        namespace: namespaceEcsInsights,
+        metricName: 'MemoryUtilized',
         dimensions: { ClusterName: clusterName, ServiceName: serviceName },
-        statistic: 'Average',
-    });
+    })
+        .stat('Average')
+        .label('MemoryUtilized');
 
-    const cpuAnomalyDetectionExpression = new awsx.cloudwatch.ExpressionWidgetMetric(
-        'ANOMALY_DETECTION_BAND(m1, 2)',
-        'AnomalyDetectionBand',
-        'e1'
-    );
+    const memoryUtilizationMetric = new MetricBuilder({
+        namespace: namespaceEcsClassic,
+        metricName: 'MemoryUtilization',
+        dimensions: { ClusterName: clusterName, ServiceName: serviceName },
+    })
+        .stat('Average')
+        .label('MemoryUtilization');
+
+    const memoryAnomalyDetectionExpression = new ExpressionBuilder({
+        expression: 'ANOMALY_DETECTION_BAND(m1, 2)',
+    })
+        .label('AnomalyDetectionBand')
+        .id('e1');
+
+    const cpuReservedMetric = new MetricBuilder({
+        namespace: namespaceEcsInsights,
+        metricName: 'CpuReserved',
+        dimensions: { ClusterName: clusterName, ServiceName: serviceName },
+    })
+        .stat('Average')
+        .label('CpuReserved');
+
+    const cpuUtilizedMetric = new MetricBuilder({
+        namespace: namespaceEcsInsights,
+        metricName: 'CpuUtilized',
+        dimensions: { ClusterName: clusterName, ServiceName: serviceName },
+    })
+        .stat('Average')
+        .label('CpuUtilized');
+
+    const cpuUtilizationMetric = new MetricBuilder({
+        namespace: namespaceEcsClassic,
+        metricName: 'CPUUtilization',
+        dimensions: { ClusterName: clusterName, ServiceName: serviceName },
+    })
+        .stat('Average')
+        .label('CPUUtilization');
+
+    const cpuAnomalyDetectionExpression = new ExpressionBuilder({
+        expression: 'ANOMALY_DETECTION_BAND(m1, 2)',
+    })
+        .label('AnomalyDetectionBand')
+        .id('e1');
 
     return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Memory Utilization',
-            width: 12,
-            height: 6,
-            period: longPeriod,
-            metrics: [
-                memoryAnomalyDetectionExpression,
-                memoryUtilizationMetric.withId('m1').withPeriod(longPeriod),
-            ],
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'CPU Utilization',
-            width: 12,
-            height: 6,
-            period: longPeriod,
-            metrics: [
-                cpuAnomalyDetectionExpression,
-                cpuUtilizationMetric.withId('m1').withPeriod(longPeriod),
-            ],
-        }),
+        new MetricWidgetBuilder()
+            .title('Memory Status')
+            .view('singleValue')
+            .width(3)
+            .height(height)
+            .addMetric(memoryReservedMetric.period(shortPeriod).build())
+            .addMetric(memoryUtilizedMetric.period(shortPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title('Memory Utilization')
+            .view('timeSeries')
+            .width(9)
+            .height(height)
+            .addMetric(memoryUtilizationMetric.id('m1').period(longPeriod).build())
+            .addMetric(memoryAnomalyDetectionExpression.build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title('CPU Status')
+            .view('singleValue')
+            .width(3)
+            .height(height)
+            .addMetric(cpuReservedMetric.period(shortPeriod).build())
+            .addMetric(cpuUtilizedMetric.period(shortPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title('CPU Utilization')
+            .view('timeSeries')
+            .width(9)
+            .height(height)
+            .addMetric(cpuUtilizationMetric.id('m1').period(longPeriod).build())
+            .addMetric(cpuAnomalyDetectionExpression.build())
+            .build(),
     ];
 }

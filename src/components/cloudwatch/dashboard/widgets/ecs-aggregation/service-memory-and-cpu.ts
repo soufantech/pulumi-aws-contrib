@@ -1,62 +1,63 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { EcsAggregationConfig, WidgetExtraConfigs } from '../../../types';
+import { Widget, EcsAggregationConfig, WidgetExtraConfigs } from '../../../types';
+import { MetricBuilder, MetricWidgetBuilder } from '../../builders';
 
 export function serviceMemoryAndCpu(
     configs: EcsAggregationConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const { services } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
     const serviceConfigs = services.map((service) => service.serviceConfig);
 
-    const memoryUtilizationMetrics = serviceConfigs.map(
-        (serviceConfig) =>
-            new awsx.cloudwatch.Metric({
-                namespace: 'AWS/ECS',
-                name: 'MemoryUtilization',
-                label: serviceConfig.serviceName,
-                dimensions: {
-                    ClusterName: serviceConfig.clusterName,
-                    ServiceName: serviceConfig.serviceName,
-                },
-                statistic: 'Average',
-                period: longPeriod,
-            })
+    const memoryUtilizationMetrics = serviceConfigs.map((serviceConfig) =>
+        new MetricBuilder({
+            namespace: 'AWS/ECS',
+            metricName: 'MemoryUtilization',
+            dimensions: {
+                ClusterName: serviceConfig.clusterName,
+                ServiceName: serviceConfig.serviceName,
+            },
+        })
+            .stat('Average')
+            .period(longPeriod)
+            .label(serviceConfig.serviceName)
     );
 
-    const cpuUtilizationMetrics = serviceConfigs.map(
-        (serviceConfig) =>
-            new awsx.cloudwatch.Metric({
-                namespace: 'AWS/ECS',
-                name: 'CPUUtilization',
-                label: serviceConfig.serviceName,
-                dimensions: {
-                    ClusterName: serviceConfig.clusterName,
-                    ServiceName: serviceConfig.serviceName,
-                },
-                statistic: 'Average',
-                period: longPeriod,
-            })
+    const cpuUtilizationMetrics = serviceConfigs.map((serviceConfig) =>
+        new MetricBuilder({
+            namespace: 'AWS/ECS',
+            metricName: 'CPUUtilization',
+            dimensions: {
+                ClusterName: serviceConfig.clusterName,
+                ServiceName: serviceConfig.serviceName,
+            },
+        })
+            .stat('Average')
+            .period(longPeriod)
+            .label(serviceConfig.serviceName)
     );
 
-    return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Service Memory Utilization',
-            width: 12,
-            height: 6,
-            metrics: memoryUtilizationMetrics,
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Service CPU Utilization',
-            width: 12,
-            height: 6,
-            metrics: cpuUtilizationMetrics,
-        }),
-    ];
+    const memoryUtilizationWidget = new MetricWidgetBuilder()
+        .title('Service Memory Utilization')
+        .view('timeSeries')
+        .width(12)
+        .height(height)
+        .period(longPeriod);
+    memoryUtilizationMetrics.forEach((metric) => memoryUtilizationWidget.addMetric(metric.build()));
+
+    const cpuUtilizationWidget = new MetricWidgetBuilder()
+        .title('Service CPU Utilization')
+        .view('timeSeries')
+        .width(12)
+        .height(height)
+        .period(longPeriod);
+    cpuUtilizationMetrics.forEach((metric) => cpuUtilizationWidget.addMetric(metric.build()));
+
+    return [memoryUtilizationWidget.build(), cpuUtilizationWidget.build()];
 }

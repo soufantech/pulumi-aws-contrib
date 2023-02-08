@@ -1,140 +1,159 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import { MetricWidget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { EcsAggregationConfig, TargetGroupConfig, WidgetExtraConfigs } from '../../../types';
+import {
+    Widget,
+    EcsAggregationConfig,
+    TargetGroupConfig,
+    WidgetExtraConfigs,
+} from '../../../types';
+import { ExpressionBuilder, MetricBuilder, MetricWidgetBuilder } from '../../builders';
 
 export function uptimeAndHealthy(
     configs: EcsAggregationConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<pulumi.Output<Widget>[]> {
     const { services } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
+    const height = constants.DEFAULT_HEIGHT;
 
-    const albConfigs = services
+    const namespace = 'AWS/ApplicationELB';
+
+    const albConfigsOutput = services
         .map((service) => service.targetGroupConfig)
         .filter((targetGroupConfig) => targetGroupConfig) as TargetGroupConfig[];
 
-    if (!albConfigs.length) {
-        return [];
+    if (!albConfigsOutput.length) {
+        return pulumi.output([]);
     }
 
-    const uptimeHistoryMetrics = albConfigs.reduce((acc, albConfig, index) => {
-        const firstMetricId = `m${index * 2 + 1}`;
-        const secondMetricId = `m${index * 2 + 2}`;
-        const expressionId = `e${index + 1}`;
+    return pulumi.all(albConfigsOutput).apply((albConfigs) => {
+        const uptimeHistoryMetrics = albConfigs.reduce((acc, albConfig, index) => {
+            const firstMetricId = `m${index * 2 + 1}`;
+            const secondMetricId = `m${index * 2 + 2}`;
+            const expressionId = `e${index + 1}`;
 
-        const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
+            const targetGroupName = albConfig.targetGroup.split('/')[1];
 
-        acc.push(
-            new awsx.cloudwatch.Metric({
-                id: firstMetricId,
-                namespace: 'AWS/ApplicationELB',
-                name: 'RequestCount',
-                label: `RequestCount ${targetGroupName}`,
-                dimensions: {
-                    LoadBalancer: albConfig.loadBalancer,
-                    TargetGroup: albConfig.targetGroup,
-                },
-                statistic: 'SampleCount',
-                period: longPeriod,
-                visible: false,
-            })
-        );
+            acc.push(
+                new MetricBuilder({
+                    namespace,
+                    metricName: 'RequestCount',
+                    dimensions: {
+                        LoadBalancer: albConfig.loadBalancer,
+                        TargetGroup: albConfig.targetGroup,
+                    },
+                })
+                    .stat('SampleCount')
+                    .period(longPeriod)
+                    .label(`RequestCount ${targetGroupName}`)
+                    .id(firstMetricId)
+                    .visible(false)
+                    .build()
+            );
 
-        acc.push(
-            new awsx.cloudwatch.Metric({
-                id: secondMetricId,
-                namespace: 'AWS/ApplicationELB',
-                name: 'HTTPCode_Target_5XX_Count',
-                label: `HTTPCode_Target_5XX_Count ${targetGroupName}`,
-                dimensions: {
-                    LoadBalancer: albConfig.loadBalancer,
-                    TargetGroup: albConfig.targetGroup,
-                },
-                statistic: 'SampleCount',
-                period: longPeriod,
-                visible: false,
-            })
-        );
+            acc.push(
+                new MetricBuilder({
+                    namespace,
+                    metricName: 'HTTPCode_Target_5XX_Count',
+                    dimensions: {
+                        LoadBalancer: albConfig.loadBalancer,
+                        TargetGroup: albConfig.targetGroup,
+                    },
+                })
+                    .stat('SampleCount')
+                    .period(longPeriod)
+                    .label(`HTTPCode_Target_5XX_Count ${targetGroupName}`)
+                    .id(secondMetricId)
+                    .visible(false)
+                    .build()
+            );
 
-        acc.push(
-            new awsx.cloudwatch.ExpressionWidgetMetric(
-                `(1-(${secondMetricId}/${firstMetricId}))*100`,
-                targetGroupName,
-                expressionId
-            )
-        );
+            acc.push(
+                new ExpressionBuilder({
+                    expression: `(1-(${secondMetricId}/${firstMetricId}))*100`,
+                })
+                    .label(targetGroupName)
+                    .id(expressionId)
+                    .build()
+            );
 
-        return acc;
-    }, [] as awsx.cloudwatch.WidgetMetric[]);
+            return acc;
+        }, [] as MetricWidget['metrics'][]);
 
-    const healthyHistoryMetrics = albConfigs.reduce((acc, albConfig, index) => {
-        const firstMetricId = `m${index * 2 + 1}`;
-        const secondMetricId = `m${index * 2 + 2}`;
-        const expressionId = `e${index + 1}`;
+        const healthyHistoryMetrics = albConfigs.reduce((acc, albConfig, index) => {
+            const firstMetricId = `m${index * 2 + 1}`;
+            const secondMetricId = `m${index * 2 + 2}`;
+            const expressionId = `e${index + 1}`;
 
-        const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
+            const targetGroupName = albConfig.targetGroup.split('/')[1];
 
-        acc.push(
-            new awsx.cloudwatch.Metric({
-                id: firstMetricId,
-                namespace: 'AWS/ApplicationELB',
-                name: 'HealthyHostCount',
-                label: `HealthyHostCount ${targetGroupName}`,
-                dimensions: {
-                    LoadBalancer: albConfig.loadBalancer,
-                    TargetGroup: albConfig.targetGroup,
-                },
-                statistic: 'Maximum',
-                period: longPeriod,
-                visible: false,
-            })
-        );
+            acc.push(
+                new MetricBuilder({
+                    namespace,
+                    metricName: 'HealthyHostCount',
+                    dimensions: {
+                        LoadBalancer: albConfig.loadBalancer,
+                        TargetGroup: albConfig.targetGroup,
+                    },
+                })
+                    .stat('Maximum')
+                    .period(longPeriod)
+                    .label(`HealthyHostCount ${targetGroupName}`)
+                    .id(firstMetricId)
+                    .visible(false)
+                    .build()
+            );
 
-        acc.push(
-            new awsx.cloudwatch.Metric({
-                id: secondMetricId,
-                namespace: 'AWS/ApplicationELB',
-                name: 'UnHealthyHostCount',
-                label: `UnHealthyHostCount ${targetGroupName}`,
-                dimensions: {
-                    LoadBalancer: albConfig.loadBalancer,
-                    TargetGroup: albConfig.targetGroup,
-                },
-                statistic: 'Maximum',
-                period: longPeriod,
-                visible: false,
-            })
-        );
+            acc.push(
+                new MetricBuilder({
+                    namespace,
+                    metricName: 'UnHealthyHostCount',
+                    dimensions: {
+                        LoadBalancer: albConfig.loadBalancer,
+                        TargetGroup: albConfig.targetGroup,
+                    },
+                })
+                    .stat('Maximum')
+                    .period(longPeriod)
+                    .label(`UnHealthyHostCount ${targetGroupName}`)
+                    .id(secondMetricId)
+                    .visible(false)
+                    .build()
+            );
 
-        acc.push(
-            new awsx.cloudwatch.ExpressionWidgetMetric(
-                `(1-(${secondMetricId}/${firstMetricId}))*100`,
-                targetGroupName,
-                expressionId
-            )
-        );
+            acc.push(
+                new ExpressionBuilder({
+                    expression: `(1-(${secondMetricId}/${firstMetricId}))*100`,
+                })
+                    .label(targetGroupName)
+                    .id(expressionId)
+                    .build()
+            );
 
-        return acc;
-    }, [] as awsx.cloudwatch.WidgetMetric[]);
+            return acc;
+        }, [] as MetricWidget['metrics'][]);
 
-    return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Uptime History',
-            width: 12,
-            height: 4,
-            period: longPeriod,
-            metrics: uptimeHistoryMetrics,
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Healthy History',
-            width: 12,
-            height: 4,
-            period: longPeriod,
-            metrics: healthyHistoryMetrics,
-        }),
-    ];
+        const uptimeHistoryWidget = new MetricWidgetBuilder()
+            .title('Uptime History')
+            .view('timeSeries')
+            .width(12)
+            .height(height)
+            .period(longPeriod)
+            .yAxis({ left: { max: 100 } });
+        uptimeHistoryMetrics.forEach((metric) => uptimeHistoryWidget.addMetric(metric));
+
+        const healthyHistoryWidget = new MetricWidgetBuilder()
+            .title('Healthy History')
+            .view('timeSeries')
+            .width(12)
+            .height(height)
+            .period(longPeriod)
+            .yAxis({ left: { max: 100 } });
+        healthyHistoryMetrics.forEach((metric) => healthyHistoryWidget.addMetric(metric));
+
+        return [uptimeHistoryWidget.build(), healthyHistoryWidget.build()];
+    });
 }
