@@ -1,88 +1,100 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { EcsAggregationConfig, TargetGroupConfig, WidgetExtraConfigs } from '../../../types';
+import {
+    Widget,
+    EcsAggregationConfig,
+    TargetGroupConfig,
+    WidgetExtraConfigs,
+} from '../../../types';
+import { MetricBuilder, MetricWidgetBuilder, HorizontalAnnotationBuilder } from '../../builders';
 
 export function latencyAndRequestCount(
     configs: EcsAggregationConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<pulumi.Output<Widget>[]> {
     const { services } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
-    const albConfigs = services
+    const albConfigsOutput = services
         .map((service) => service.targetGroupConfig)
         .filter((targetGroupConfig) => targetGroupConfig) as TargetGroupConfig[];
 
-    if (!albConfigs.length) {
-        return [];
+    if (!albConfigsOutput.length) {
+        return pulumi.output([]);
     }
 
-    const targetResponseTimeMetrics = albConfigs.map((albConfig) => {
-        const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
+    return pulumi.all(albConfigsOutput).apply((albConfigs) => {
+        const targetResponseTimeMetrics = albConfigs.map((albConfig) => {
+            const targetGroupName = albConfig.targetGroup.split('/')[1];
 
-        return new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ApplicationELB',
-            name: 'TargetResponseTime',
-            label: targetGroupName,
-            dimensions: {
-                LoadBalancer: albConfig.loadBalancer,
-                TargetGroup: albConfig.targetGroup,
-            },
-            statistic: 'Average',
-            period: longPeriod,
+            return new MetricBuilder({
+                namespace: 'AWS/ApplicationELB',
+                metricName: 'TargetResponseTime',
+                dimensions: {
+                    LoadBalancer: albConfig.loadBalancer,
+                    TargetGroup: albConfig.targetGroup,
+                },
+            })
+                .stat('Average')
+                .period(longPeriod)
+                .label(targetGroupName);
         });
-    });
 
-    const requestCountMetrics = albConfigs.map((albConfig) => {
-        const targetGroupName = albConfig.targetGroup.toString().split('/')[1];
+        const requestCountMetrics = albConfigs.map((albConfig) => {
+            const targetGroupName = albConfig.targetGroup.split('/')[1];
 
-        return new awsx.cloudwatch.Metric({
-            namespace: 'AWS/ApplicationELB',
-            name: 'RequestCount',
-            label: targetGroupName,
-            dimensions: {
-                LoadBalancer: albConfig.loadBalancer,
-                TargetGroup: albConfig.targetGroup,
-            },
-            statistic: 'Sum',
-            period: longPeriod,
+            return new MetricBuilder({
+                namespace: 'AWS/ApplicationELB',
+                metricName: 'RequestCount',
+                dimensions: {
+                    LoadBalancer: albConfig.loadBalancer,
+                    TargetGroup: albConfig.targetGroup,
+                },
+            })
+                .stat('Sum')
+                .period(longPeriod)
+                .label(targetGroupName);
         });
+
+        const latencyWarning = 0.3;
+        const latencyAlarm = 0.5;
+
+        const warningColor = '#ff7f0e';
+        const alarmColor = '#d62728';
+
+        const warningAnnotation = new HorizontalAnnotationBuilder({ value: latencyWarning })
+            .color(warningColor)
+            .label('In warning')
+            .build();
+        const alarmAnnotation = new HorizontalAnnotationBuilder({ value: latencyAlarm })
+            .color(alarmColor)
+            .label('In alarm')
+            .build();
+
+        const targetResponseTimeWidget = new MetricWidgetBuilder()
+            .title('Target Group Latency')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .period(longPeriod)
+            .addHorizontalAnnotation(warningAnnotation)
+            .addHorizontalAnnotation(alarmAnnotation);
+        targetResponseTimeMetrics.forEach((metric) => {
+            targetResponseTimeWidget.addMetric(metric.build());
+        });
+
+        const requestCountWidget = new MetricWidgetBuilder()
+            .title('Request Count')
+            .view('timeSeries')
+            .width(12)
+            .height(6)
+            .period(longPeriod);
+        requestCountMetrics.forEach((metric) => {
+            requestCountWidget.addMetric(metric.build());
+        });
+
+        return [targetResponseTimeWidget.build(), requestCountWidget.build()];
     });
-
-    const latencyWarning = 0.3;
-    const latencyAlarm = 0.5;
-
-    const warningColor = '#ff7f0e';
-    const alarmColor = '#d62728';
-
-    const annotations = [
-        new awsx.cloudwatch.HorizontalAnnotation({
-            aboveEdge: { label: 'In warning', value: latencyWarning },
-            color: warningColor,
-        }),
-        new awsx.cloudwatch.HorizontalAnnotation({
-            aboveEdge: { label: 'In alarm', value: latencyAlarm },
-            color: alarmColor,
-        }),
-    ];
-
-    return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Target Group Latency',
-            width: 12,
-            height: 6,
-            annotations,
-            metrics: targetResponseTimeMetrics,
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Request Count',
-            width: 12,
-            height: 6,
-            metrics: requestCountMetrics,
-        }),
-    ];
 }

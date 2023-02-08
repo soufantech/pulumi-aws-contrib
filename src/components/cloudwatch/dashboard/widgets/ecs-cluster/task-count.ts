@@ -1,142 +1,136 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
 import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { EcsClusterWithAsgConfig, WidgetExtraConfigs } from '../../../types';
+import { Widget, EcsClusterWithAsgConfig, WidgetExtraConfigs } from '../../../types';
+import { MetricBuilder, MetricWidgetBuilder } from '../../builders';
+
+function createContainerMetrics(clusterName: pulumi.Input<string>): [MetricBuilder, MetricBuilder] {
+    const serviceCountMetric = new MetricBuilder({
+        namespace: 'ECS/ContainerInsights',
+        metricName: 'ServiceCount',
+        dimensions: { ClusterName: clusterName },
+    })
+        .stat('Maximum')
+        .label('ServiceCount');
+
+    const taskCountMetric = new MetricBuilder({
+        namespace: 'ECS/ContainerInsights',
+        metricName: 'TaskCount',
+        dimensions: { ClusterName: clusterName },
+    })
+        .stat('Maximum')
+        .label('TaskCount');
+
+    return [serviceCountMetric, taskCountMetric];
+}
 
 function instanceAndTaskCount(
     clusterName: pulumi.Input<string>,
     asgName: pulumi.Input<string>,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
-    const asgInServiceInstancesMetric = new awsx.cloudwatch.Metric({
+    const asgInServiceInstancesMetric = new MetricBuilder({
         namespace: 'AWS/AutoScaling',
-        name: 'GroupInServiceInstances',
-        label: 'GroupInServiceInstances',
+        metricName: 'GroupInServiceInstances',
         dimensions: { AutoScalingGroupName: asgName },
-        statistic: 'Maximum',
-    });
+    })
+        .stat('Maximum')
+        .label('GroupInServiceInstances');
 
-    const asgDesiredCapacityMetric = new awsx.cloudwatch.Metric({
+    const asgDesiredCapacityMetric = new MetricBuilder({
         namespace: 'AWS/AutoScaling',
-        name: 'GroupInServiceInstances',
-        label: 'GroupInServiceInstances',
+        metricName: 'GroupDesiredCapacity',
         dimensions: { AutoScalingGroupName: asgName },
-        statistic: 'Maximum',
-    });
+    })
+        .stat('Maximum')
+        .label('GroupDesiredCapacity');
 
-    const asgMaxSizeMetric = new awsx.cloudwatch.Metric({
+    const asgMaxSizeMetric = new MetricBuilder({
         namespace: 'AWS/AutoScaling',
-        name: 'GroupMaxSize',
-        label: 'GroupMaxSize',
+        metricName: 'GroupMaxSize',
         dimensions: { AutoScalingGroupName: asgName },
-        statistic: 'Maximum',
-    });
+    })
+        .stat('Maximum')
+        .label('GroupMaxSize');
 
-    const serviceCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'ServiceCount',
-        label: 'ServiceCount',
-        dimensions: { ClusterName: clusterName },
-        statistic: 'Maximum',
-    });
-
-    const taskCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'TaskCount',
-        label: 'TaskCount',
-        dimensions: { ClusterName: clusterName },
-        statistic: 'Maximum',
-    });
+    const [serviceCountMetric, taskCountMetric] = createContainerMetrics(clusterName);
 
     return [
-        new awsx.cloudwatch.SingleNumberMetricWidget({
-            title: 'Instance Count Status',
-            width: 3,
-            height: 6,
-            metrics: [
-                asgInServiceInstancesMetric.withPeriod(shortPeriod),
-                asgMaxSizeMetric.withPeriod(shortPeriod),
-            ],
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: `Instance Count History (${asgName})`,
-            width: 9,
-            height: 6,
-            metrics: [
-                asgDesiredCapacityMetric.withPeriod(longPeriod),
-                asgInServiceInstancesMetric.withPeriod(longPeriod),
-            ],
-        }),
-        new awsx.cloudwatch.SingleNumberMetricWidget({
-            title: 'Task Count Status',
-            width: 3,
-            height: 6,
-            metrics: [
-                serviceCountMetric.withPeriod(shortPeriod),
-                taskCountMetric.withPeriod(shortPeriod),
-            ],
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: `Task Count History (${clusterName})`,
-            width: 9,
-            height: 6,
-            metrics: [taskCountMetric.withPeriod(longPeriod)],
-        }),
+        new MetricWidgetBuilder()
+            .title('Instance Count Status')
+            .view('singleValue')
+            .width(3)
+            .height(6)
+            .period(shortPeriod)
+            .addMetric(asgInServiceInstancesMetric.period(shortPeriod).build())
+            .addMetric(asgMaxSizeMetric.period(shortPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title(pulumi.interpolate`Instance Count History (${asgName})`)
+            .view('timeSeries')
+            .width(9)
+            .height(6)
+            .period(longPeriod)
+            .addMetric(asgDesiredCapacityMetric.period(longPeriod).build())
+            .addMetric(asgInServiceInstancesMetric.period(longPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title('Task Count Status')
+            .view('singleValue')
+            .width(3)
+            .height(6)
+            .period(shortPeriod)
+            .addMetric(serviceCountMetric.period(shortPeriod).build())
+            .addMetric(taskCountMetric.period(shortPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title(pulumi.interpolate`Task Count History (${clusterName})`)
+            .view('timeSeries')
+            .width(9)
+            .height(6)
+            .period(longPeriod)
+            .addMetric(taskCountMetric.period(longPeriod).build())
+            .build(),
     ];
 }
 
 function onlyTaskCount(
     clusterName: pulumi.Input<string>,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const shortPeriod = extraConfigs?.shortPeriod || constants.DEFAULT_PERIOD;
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
-    const serviceCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'ServiceCount',
-        label: 'ServiceCount',
-        dimensions: { ClusterName: clusterName },
-        statistic: 'Maximum',
-    });
-
-    const taskCountMetric = new awsx.cloudwatch.Metric({
-        namespace: 'ECS/ContainerInsights',
-        name: 'TaskCount',
-        label: 'TaskCount',
-        dimensions: { ClusterName: clusterName },
-        statistic: 'Maximum',
-    });
+    const [serviceCountMetric, taskCountMetric] = createContainerMetrics(clusterName);
 
     return [
-        new awsx.cloudwatch.SingleNumberMetricWidget({
-            title: 'Task Count Status',
-            width: 6,
-            height: 4,
-            metrics: [
-                serviceCountMetric.withPeriod(shortPeriod),
-                taskCountMetric.withPeriod(shortPeriod),
-            ],
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: `Task Count History (${clusterName})`,
-            width: 18,
-            height: 4,
-            metrics: [taskCountMetric.withPeriod(longPeriod)],
-        }),
+        new MetricWidgetBuilder()
+            .title('Task Count Status')
+            .view('singleValue')
+            .width(3)
+            .height(6)
+            .period(shortPeriod)
+            .addMetric(serviceCountMetric.period(shortPeriod).build())
+            .addMetric(taskCountMetric.period(shortPeriod).build())
+            .build(),
+        new MetricWidgetBuilder()
+            .title(pulumi.interpolate`Task Count History (${clusterName})`)
+            .view('timeSeries')
+            .width(21)
+            .height(6)
+            .period(longPeriod)
+            .addMetric(taskCountMetric.period(longPeriod).build())
+            .build(),
     ];
 }
 
 export function taskCount(
     configs: EcsClusterWithAsgConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<Widget>[] {
     const { clusterName, asgName } = configs;
 
     if (asgName) {

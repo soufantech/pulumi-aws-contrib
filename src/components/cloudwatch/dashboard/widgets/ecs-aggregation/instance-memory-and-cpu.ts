@@ -1,85 +1,89 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import * as awsx from '@pulumi/awsx/classic';
-import { Widget } from '@pulumi/awsx/classic/cloudwatch';
+import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
-import { EcsAggregationConfig, WidgetExtraConfigs } from '../../../types';
+import { Widget, EcsAggregationConfig, WidgetExtraConfigs } from '../../../types';
+import { MetricBuilder, MetricWidgetBuilder } from '../../builders';
 
 export function instanceMemoryAndCpu(
     configs: EcsAggregationConfig,
     extraConfigs?: WidgetExtraConfigs
-): Widget[] {
+): pulumi.Output<pulumi.Output<Widget>[]> {
     const { services } = configs;
 
     const longPeriod = extraConfigs?.longPeriod || constants.DEFAULT_PERIOD;
 
-    const clusters = Array.from(
-        services.reduce(
-            (acc, service) => acc.add(service.serviceConfig.clusterName.toString()),
-            new Set<string>()
-        )
-    );
+    const clustersOutput = services.map((service) => service.serviceConfig.clusterName);
 
-    const memoryReservationMetrics = clusters.map(
-        (clusterName) =>
-            new awsx.cloudwatch.Metric({
+    return pulumi.all(clustersOutput).apply((clusters) => {
+        const clusterNames = Array.from(
+            clusters.reduce((acc, cluster) => acc.add(cluster), new Set<string>())
+        );
+
+        const memoryReservationMetrics = clusterNames.map((clusterName) =>
+            new MetricBuilder({
                 namespace: 'AWS/ECS',
-                name: 'MemoryReservation',
-                label: clusterName,
-                dimensions: {
-                    ClusterName: clusterName,
-                },
-                statistic: 'Average',
-                period: longPeriod,
+                metricName: 'MemoryReservation',
+                dimensions: { ClusterName: clusterName },
             })
-    );
+                .stat('Average')
+                .period(longPeriod)
+                .label(clusterName)
+        );
 
-    const memoryUtilizationMetrics = clusters.map(
-        (clusterName) =>
-            new awsx.cloudwatch.Metric({
+        const memoryUtilizationMetrics = clusterNames.map((clusterName) =>
+            new MetricBuilder({
                 namespace: 'AWS/ECS',
-                name: 'MemoryUtilization',
-                label: clusterName,
-                dimensions: {
-                    ClusterName: clusterName,
-                },
-                statistic: 'Average',
-                period: longPeriod,
+                metricName: 'MemoryUtilization',
+                dimensions: { ClusterName: clusterName },
             })
-    );
+                .stat('Average')
+                .period(longPeriod)
+                .label(clusterName)
+        );
 
-    const cpuUtilizationMetrics = clusters.map(
-        (clusterName) =>
-            new awsx.cloudwatch.Metric({
+        const cpuUtilizationMetrics = clusterNames.map((clusterName) =>
+            new MetricBuilder({
                 namespace: 'AWS/ECS',
-                name: 'CPUUtilization',
-                label: clusterName,
-                dimensions: {
-                    ClusterName: clusterName,
-                },
-                statistic: 'Average',
-                period: longPeriod,
+                metricName: 'CPUUtilization',
+                dimensions: { ClusterName: clusterName },
             })
-    );
+                .stat('Average')
+                .period(longPeriod)
+                .label(clusterName)
+        );
 
-    return [
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Instance Memory Reservation',
-            width: 8,
-            height: 6,
-            metrics: memoryReservationMetrics,
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Instance Memory Utilization',
-            width: 8,
-            height: 6,
-            metrics: memoryUtilizationMetrics,
-        }),
-        new awsx.cloudwatch.LineGraphMetricWidget({
-            title: 'Instance CPU Utilization',
-            width: 8,
-            height: 6,
-            metrics: cpuUtilizationMetrics,
-        }),
-    ];
+        const memoryReservationWidget = new MetricWidgetBuilder()
+            .title('Instance Memory Reservation')
+            .view('timeSeries')
+            .width(8)
+            .height(6)
+            .period(longPeriod);
+        memoryReservationMetrics.forEach((metric) =>
+            memoryReservationWidget.addMetric(metric.build())
+        );
+
+        const memoryUtilizationWidget = new MetricWidgetBuilder()
+            .title('Instance Memory Utilization')
+            .view('timeSeries')
+            .width(8)
+            .height(6)
+            .period(longPeriod);
+        memoryUtilizationMetrics.forEach((metric) =>
+            memoryUtilizationWidget.addMetric(metric.build())
+        );
+
+        const cpuUtilizationWidget = new MetricWidgetBuilder()
+            .title('Instance CPU Utilization')
+            .view('timeSeries')
+            .width(8)
+            .height(6)
+            .period(longPeriod);
+        cpuUtilizationMetrics.forEach((metric) => cpuUtilizationWidget.addMetric(metric.build()));
+
+        return [
+            memoryReservationWidget.build(),
+            memoryUtilizationWidget.build(),
+            cpuUtilizationWidget.build(),
+        ];
+    });
 }
