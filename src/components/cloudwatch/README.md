@@ -146,6 +146,21 @@ The dashboard `builder` receives a ordered list of `widgets` and creates a `dash
   - latencyAndRequestCount
   - uptimeAndHealthy
 
+Log Group
+---------
+
+This component ensures the use of retention period and a path structure in the log group name.
+
+### Path structure
+
+```
+/${prefix}/${scope}/${name}
+```
+
+- `prefix`: you can use the company name to differentiate from standard aws logs that start with `/aws` (default: `/custom`)
+- `scope`: you can use the service name similar to the structure of standard AWS logs, e.g. `ecs`, `rds`, `lambda`, etc
+- `name`: you can use the name of the resource, e.g. `my-service`, `my-database`, etc
+
 How to contribute
 -----------------
 
