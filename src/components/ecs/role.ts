@@ -8,6 +8,7 @@ export interface RoleArgs {
     managedPolicies?: pulumi.Input<string>[];
     assumeRoleStatements?: aws.types.input.iam.GetPolicyDocumentStatementArgs[];
     maxSessionDuration?: pulumi.Input<number>;
+    tags?: Record<string, pulumi.Input<string>>;
 }
 
 export class Role extends iam.Role {
@@ -31,6 +32,7 @@ export class Role extends iam.Role {
                     ...(args.assumeRoleStatements ?? []),
                 ],
                 maxSessionDuration: args.maxSessionDuration,
+                tags: args.tags,
             },
             opts
         );

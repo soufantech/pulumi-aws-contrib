@@ -83,3 +83,10 @@ const parameterStorePolicy = iam.policyFactories.createParameterStorePolicy(
 ### Component list
 
 - createParameterStorePolicy
+
+How to contribute
+-----------------
+
+### Create a new policy factory
+
+_Missing documentation_
