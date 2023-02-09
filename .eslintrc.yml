@@ -28,6 +28,11 @@ settings:
   import/resolver:
     node:
       extensions: ['.js', '.jsx', '.ts', '.tsx']
+overrides:
+  - files:
+      - src/**/*.test.js
+    rules:
+      sonarjs/no-duplicate-string: off
 rules:
   import/prefer-default-export: off
   no-useless-constructor: off
@@ -56,8 +61,6 @@ rules:
       jsx: never
       ts: never
       tsx: never
-overrides:
-  - files:
-      - src/**/*.test.js
-    rules:
-      sonarjs/no-duplicate-string: off
+  no-plusplus:
+    - error
+    - allowForLoopAfterthoughts: true
