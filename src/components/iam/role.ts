@@ -2,7 +2,7 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 export interface RoleArgs {
-    inlinePolicies: aws.types.input.iam.RoleInlinePolicy[];
+    inlinePolicies?: aws.types.input.iam.RoleInlinePolicy[];
     managedPolicies?: pulumi.Input<string>[];
     assumeRoleStatements?: aws.types.input.iam.GetPolicyDocumentStatementArgs[];
     maxSessionDuration?: pulumi.Input<number>;
