@@ -5,6 +5,7 @@ export interface LogGroupArgs {
     scope: pulumi.Input<string>;
     prefix?: pulumi.Input<string>;
     retentionInDays?: pulumi.Input<number>;
+    tags?: Record<string, pulumi.Input<string>>;
 }
 
 export class LogGroup {
@@ -16,6 +17,14 @@ export class LogGroup {
 
         const logName = `/${prefix}/${args.scope}/${name}`;
 
-        this.logGroup = new aws.cloudwatch.LogGroup(name, { name: logName, retentionInDays }, opts);
+        this.logGroup = new aws.cloudwatch.LogGroup(
+            name,
+            {
+                name: logName,
+                retentionInDays,
+                tags: args.tags,
+            },
+            opts
+        );
     }
 }
