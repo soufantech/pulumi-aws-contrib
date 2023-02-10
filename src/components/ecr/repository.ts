@@ -4,7 +4,8 @@ import * as pulumi from '@pulumi/pulumi';
 export type RepositoryArgs = {
     imageTagMutability?: pulumi.Input<string>;
     forceDelete?: pulumi.Input<boolean>;
-    envTags?: pulumi.Input<string>[];
+    tagPrefixes?: pulumi.Input<string>[];
+    tagRetention?: pulumi.Input<number>;
     tags?: Record<string, pulumi.Input<string>>;
 };
 
@@ -33,25 +34,25 @@ export class Repository {
             opts
         );
 
-        const envTags = args.envTags || [];
+        const tagPrefixes = args.tagPrefixes || [];
 
         const policy: aws.ecr.LifecyclePolicyDocument = {
             rules: [
-                ...envTags.map(
-                    (envTag, index): aws.ecr.PolicyRule => ({
+                ...tagPrefixes.map(
+                    (tagPrefix, index): aws.ecr.PolicyRule => ({
                         rulePriority: (index + 1) * 10,
-                        description: `${envTag} images`,
+                        description: `${tagPrefix} images`,
                         selection: {
                             tagStatus: 'tagged',
-                            tagPrefixList: [`${envTag}-`],
+                            tagPrefixList: [`${tagPrefix}-`],
                             countType: 'imageCountMoreThan',
-                            countNumber: 3,
+                            countNumber: args.tagRetention || 3,
                         },
                         action: { type: 'expire' },
                     })
                 ),
                 {
-                    rulePriority: (envTags.length + 1) * 10,
+                    rulePriority: (tagPrefixes.length + 1) * 10,
                     selection: {
                         tagStatus: 'untagged',
                         countType: 'imageCountMoreThan',
