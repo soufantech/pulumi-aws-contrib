@@ -6,14 +6,14 @@ export function createAssumeRolePolicyForUser(
     accountId: pulumi.Input<string>,
     path?: pulumi.Input<string>
 ): aws.types.input.iam.GetPolicyDocumentStatementArgs[] {
-    const policyName = path ? pulumi.interpolate`${path}/${name}` : name;
+    const userName = path ? pulumi.interpolate`${path}/${name}` : name;
 
     return [
         {
             actions: ['sts:AssumeRole'],
             principals: [
                 {
-                    identifiers: [pulumi.interpolate`arn:aws:iam::${accountId}:user/${policyName}`],
+                    identifiers: [pulumi.interpolate`arn:aws:iam::${accountId}:user/${userName}`],
                     type: 'AWS',
                 },
             ],
@@ -22,7 +22,7 @@ export function createAssumeRolePolicyForUser(
             actions: ['sts:TagSession'],
             principals: [
                 {
-                    identifiers: [pulumi.interpolate`arn:aws:iam::${accountId}:user/${policyName}`],
+                    identifiers: [pulumi.interpolate`arn:aws:iam::${accountId}:user/${userName}`],
                     type: 'AWS',
                 },
             ],
