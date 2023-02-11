@@ -1,8 +1,8 @@
-import { MetricWidget } from '@pulumi/awsx/classic/cloudwatch';
 import * as pulumi from '@pulumi/pulumi';
 
 import * as constants from '../../../constants';
 import {
+    MetricWidget,
     Widget,
     EcsAggregationConfig,
     TargetGroupConfig,
@@ -81,7 +81,7 @@ export function uptimeAndHealthy(
             );
 
             return acc;
-        }, [] as MetricWidget['metrics'][]);
+        }, [] as MetricWidget['properties']['metrics']);
 
         const healthyHistoryMetrics = albConfigs.reduce((acc, albConfig, index) => {
             const firstMetricId = `m${index * 2 + 1}`;
@@ -134,7 +134,7 @@ export function uptimeAndHealthy(
             );
 
             return acc;
-        }, [] as MetricWidget['metrics'][]);
+        }, [] as MetricWidget['properties']['metrics']);
 
         const uptimeHistoryWidget = new MetricWidgetBuilder()
             .title('Uptime History')
