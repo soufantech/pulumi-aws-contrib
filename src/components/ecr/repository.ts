@@ -69,7 +69,11 @@ export class Repository {
                 repository: this.ecrRepository.name,
                 policy,
             },
-            { ...opts, parent: this.ecrRepository }
+            {
+                ...opts,
+                parent: this.ecrRepository,
+                replaceOnChanges: [''],
+            }
         );
     }
 }
