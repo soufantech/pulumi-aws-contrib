@@ -64,6 +64,10 @@ Some settings regarding logging are highlighted here:
 - Log Group uses a log retention default of 180 days
 - Log Stream gets container name in task definition to link log to ECS task pane
 
+### Load Balancer
+
+Supports the use of load balancer if the Target Group is specified.
+
 ### Other information
 
 Tag propagation is configured to use the Task Definition instead of the ECS service allowing adjustments during deploy time.
