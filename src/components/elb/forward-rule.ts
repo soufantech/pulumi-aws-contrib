@@ -9,6 +9,7 @@ export interface ForwardRuleArgs {
     targetProtocol?: pulumi.Input<string>;
     healthCheck?: pulumi.Input<aws.types.input.lb.TargetGroupHealthCheck>
     listenerPort?: pulumi.Input<number>;
+    name?: pulumi.Input<string>;
     tags?: Record<string, pulumi.Input<string>>;
 }
 
@@ -29,6 +30,7 @@ export class ForwardRule {
         });
 
         this.targetGroup = new aws.lb.TargetGroup(name, {
+            name: args.name,
             targetType: 'instance',
             vpcId: this.vpc.id,
             port: args.targetPort ?? 3000,
