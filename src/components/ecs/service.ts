@@ -23,6 +23,7 @@ export interface ServiceArgs {
     scaleTarget?: pulumi.Input<number>;
     scaleOutCooldown?: pulumi.Input<number>;
     scaleInCooldown?: pulumi.Input<number>;
+    targetGroupArn?: pulumi.Input<string>;
     tags?: Record<string, pulumi.Input<string>>;
 }
 
@@ -135,6 +136,9 @@ export class Service extends pulumi.ComponentResource {
         ecsTaskDefinition: awsn.ecs.TaskDefinition,
         args: ServiceArgs
     ): aws.ecs.Service {
+        const containerName = 'main';
+        const containerPort = args.containerPort ?? 3000;
+
         return new aws.ecs.Service(
             name,
             {
@@ -153,6 +157,9 @@ export class Service extends pulumi.ComponentResource {
                     enable: true,
                     rollback: true,
                 },
+                loadBalancers: args.targetGroupArn
+                    ? [{ containerName, containerPort, targetGroupArn: args.targetGroupArn }]
+                    : [],
                 tags: args.tags,
             },
             {
