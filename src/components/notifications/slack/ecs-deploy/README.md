@@ -9,7 +9,7 @@ import { kms, notifications } from '@soufantech/pulumi-aws-contrib';
 const kmsKeyName = 'notifications';
 const kmsKey = new kms.Key(kmsKeyName, {});
 
-const alarmNotification = new notifications.slack.AlarmNotification('alarm-notifications', {
+const ecsDeployNotification = new notifications.slack.EcsDeployNotification('ecs-deploy-notifications', {
   region,
   accountId,
   chatWebhook: config.requireSecret('webhook'),
@@ -19,12 +19,22 @@ const alarmNotification = new notifications.slack.AlarmNotification('alarm-notif
 
 // ...
 
-const kmsKeyPolicy = kmsKey.createKeyPolicy(kmsKeyName, accountId, [alarmNotification.role.arn]);
+const kmsKeyPolicy = kmsKey.createKeyPolicy(kmsKeyName, accountId, [ecsDeployNotification.role.arn]);
 
 // ...
 
-export const lambdaFunctionArn = alarmNotification.lambdaFunction.arn;
-export const snsTopicArn = alarmNotification.snsTopic.arn;
+const ecsDeployEventRule = new aws.cloudwatch.EventRule('ecs-deploy', {
+    description: 'ECS Deployment State Change',
+    eventPattern: JSON.stringify({
+        source: ['aws.ecs'],
+        'detail-type': ['ECS Deployment State Change'],
+    }),
+});
+ecsDeployEventRule.onEvent('ecs-deploy', ecsDeployNotification.lambdaFunction);
+
+// ...
+
+export const lambdaFunctionArn = ecsDeployNotification.lambdaFunction.arn;
 ```
 
 How to contribute
@@ -42,25 +52,13 @@ Run command bellow (change JSON file):
 aws lambda invoke \
   --function-name "$(pulumi stack output lambdaFunctionArn)" \
   --log-type "Tail" \
-  --payload "file://lambda-tests/alarm.json" \
+  --payload "file://lambda-tests/failed.json" \
   --cli-binary-format raw-in-base64-out \
   --query "LogResult" --output text \
   result.log | base64 -d
 ```
 
 *More JSON test files in `./lamda-tests` directory.*
-
-#### SNS tests
-
-Run command bellow (change JSON file):
-
-```shell
-aws sns publish \
-  --topic-arn "$(pulumi stack output snsTopicArn)" \
-  --message "file://sns-tests/alarm.json"
-```
-
-*More JSON test files in `./sns-tests` directory.*
 
 Problems
 --------
