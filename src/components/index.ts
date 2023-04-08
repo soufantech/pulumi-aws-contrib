@@ -3,6 +3,7 @@ import * as ecr from './ecr';
 import * as ecs from './ecs';
 import * as elb from './elb';
 import * as iam from './iam';
+import * as kms from './kms';
 import * as notifications from './notifications';
 
-export { cloudwatch, ecr, ecs, elb, iam, notifications };
+export { cloudwatch, ecr, ecs, elb, iam, kms, notifications };

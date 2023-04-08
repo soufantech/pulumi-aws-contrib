@@ -230,14 +230,9 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
         tags?: Record<string, string>
     ): aws.lambda.Function {
         const directory = path.join(__dirname, '/function');
-        // const file = path.join(__dirname, 'function', 'index.js');
         const handler = 'index.handler';
 
-        // const assetArchive = new pulumi.asset.AssetArchive({
-        //     '.': new pulumi.asset.FileArchive(directory),
-        // });
         const assetArchive = new pulumi.asset.FileArchive(directory);
-        // const assetArchive = new pulumi.asset.FileAsset(file);
 
         return new aws.lambda.Function(
             name,
@@ -289,3 +284,5 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
         return snsTopic.onEvent(name, lambdaFunction);
     }
 }
+
+// enh
