@@ -3,7 +3,7 @@ import path from 'path';
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-export interface SlackAlarmNotificationArgs {
+export interface AlarmNotificationArgs {
     region: pulumi.Input<string>;
     accountId: pulumi.Input<string>;
     chatWebhook: pulumi.Input<string>;
@@ -13,10 +13,10 @@ export interface SlackAlarmNotificationArgs {
     tags?: Record<string, string>;
 }
 
-export class SlackAlarmNotification extends pulumi.ComponentResource {
+export class AlarmNotification extends pulumi.ComponentResource {
     readonly role: aws.iam.Role;
 
-    readonly lambdaFunction: aws.lambda.CallbackFunction<aws.sns.TopicEvent, unknown>;
+    readonly lambdaFunction: aws.lambda.Function;
 
     readonly logGroup: aws.cloudwatch.LogGroup;
 
@@ -24,8 +24,8 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
 
     readonly snsTopicEventSubscription: aws.sns.TopicEventSubscription;
 
-    constructor(name: string, args: SlackAlarmNotificationArgs, opts?: pulumi.ResourceOptions) {
-        super('contrib:components:SlackNotificationFunction', name, {}, opts);
+    constructor(name: string, args: AlarmNotificationArgs, opts?: pulumi.ResourceOptions) {
+        super('contrib:components:AlarmNotification', name, {}, opts);
 
         const { region, accountId, chatWebhook, kmsKey, kmsAlias, tags } = args;
         const logGroupRetentionDays = args.logGroupRetentionDays || 14;
@@ -47,7 +47,7 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
 
         const snsTopic = this.createSnsTopic(name, tags);
 
-        const snsTopicEventSubscription = SlackAlarmNotification.subscribeLambdaFunctionOnSnsTopic(
+        const snsTopicEventSubscription = AlarmNotification.subscribeLambdaFunctionOnSnsTopic(
             name,
             lambdaFunction,
             snsTopic
@@ -204,5 +204,3 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
         return snsTopic.onEvent(name, lambdaFunction);
     }
 }
-
-// enh

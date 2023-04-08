@@ -1,3 +1,3 @@
-export type { SlackAlarmNotificationArgs } from './component';
+import * as slack from './slack';
 
-export { SlackAlarmNotification } from './component';
+export { slack };
