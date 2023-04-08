@@ -3,16 +3,16 @@ import path from 'path';
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-export interface SlackNotificationFunctionArgs {
-    region: string;
-    accountId: string;
-    slackWebhook: pulumi.Input<string>;
-    kmsDeletionWindow?: number;
-    logGroupRetentionDays?: number;
+export interface SlackAlarmNotificationArgs {
+    region: pulumi.Input<string>,
+    accountId: pulumi.Input<string>,
+    chatWebhook: pulumi.Input<string>;
+    kmsDeletionWindow?: pulumi.Input<number>;
+    logGroupRetentionDays?: pulumi.Input<number>;
     tags?: Record<string, string>;
 }
 
-export class SlackNotificationFunction extends pulumi.ComponentResource {
+export class SlackAlarmNotification extends pulumi.ComponentResource {
     readonly role: aws.iam.Role;
 
     readonly kmsKey: aws.kms.Key;
@@ -27,10 +27,10 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
 
     readonly snsTopicEventSubscription: aws.sns.TopicEventSubscription;
 
-    constructor(name: string, args: SlackNotificationFunctionArgs, opts?: pulumi.ResourceOptions) {
+    constructor(name: string, args: SlackAlarmNotificationArgs, opts?: pulumi.ResourceOptions) {
         super('contrib:components:SlackNotificationFunction', name, {}, opts);
 
-        const { region, accountId, slackWebhook, tags } = args;
+        const { region, accountId, chatWebhook, tags } = args;
         const kmsDeletionWindow = args.kmsDeletionWindow || 7;
         const logGroupRetentionDays = args.logGroupRetentionDays || 14;
 
@@ -44,13 +44,13 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
             tags
         );
 
-        const slackWebhookCiphertext = this.encrypt(name, kmsKey, slackWebhook);
+        const chatWebhookCiphertext = this.encrypt(name, kmsKey, chatWebhook);
 
         const lambdaFunction = this.createLambdaFunction(
             name,
             region,
             role,
-            slackWebhookCiphertext,
+            chatWebhookCiphertext,
             kmsAlias,
             tags
         );
@@ -59,12 +59,11 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
 
         const snsTopic = this.createSnsTopic(name, tags);
 
-        const snsTopicEventSubscription =
-            SlackNotificationFunction.subscribeLambdaFunctionOnSnsTopic(
-                name,
-                lambdaFunction,
-                snsTopic
-            );
+        const snsTopicEventSubscription = SlackAlarmNotification.subscribeLambdaFunctionOnSnsTopic(
+            name,
+            lambdaFunction,
+            snsTopic
+        );
 
         this.role = role;
         this.kmsKey = kmsKey;
@@ -77,18 +76,17 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
 
     private createRole(
         name: string,
-        region: string,
-        accountId: string,
+        region: pulumi.Input<string>,
+        accountId: pulumi.Input<string>,
         tags?: Record<string, string>
     ): aws.iam.Role {
-        const logGroupPolicy = aws.iam.getPolicyDocument(
+        const logGroupPolicy = aws.iam.getPolicyDocumentOutput(
             {
                 statements: [
                     {
-                        effect: 'Allow',
                         actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
                         resources: [
-                            `arn:aws:logs:${region}:${accountId}:log-group:/aws/lambda/${name}-*:*`,
+                            pulumi.interpolate`arn:aws:logs:${region}:${accountId}:log-group:/aws/lambda/${name}-*:*`,
                         ],
                     },
                 ],
@@ -96,13 +94,14 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
             { parent: this }
         );
 
-        const kmsPolicy = aws.iam.getPolicyDocument(
+        const kmsPolicy = aws.iam.getPolicyDocumentOutput(
             {
                 statements: [
                     {
-                        effect: 'Allow',
                         actions: ['kms:Decrypt'],
-                        resources: [`arn:aws:kms:${region}:${accountId}:alias/${name}`],
+                        resources: [
+                            pulumi.interpolate`arn:aws:kms:${region}:${accountId}:alias/${name}`,
+                        ],
                     },
                 ],
             },
@@ -128,11 +127,11 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
                 inlinePolicies: [
                     {
                         name: 'log-group',
-                        policy: logGroupPolicy.then((policy) => policy.json),
+                        policy: logGroupPolicy.json,
                     },
                     {
                         name: 'kms',
-                        policy: kmsPolicy.then((policy) => policy.json),
+                        policy: kmsPolicy.json,
                     },
                 ],
                 tags,
@@ -143,31 +142,31 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
 
     private createKmsKey(
         name: string,
-        accountId: string,
+        accountId: pulumi.Input<string>,
         role: aws.iam.Role,
-        kmsDeletionWindow: number,
+        kmsDeletionWindow: pulumi.Input<number>,
         tags?: Record<string, string>
     ): { kmsKey: aws.kms.Key; kmsAlias: aws.kms.Alias } {
-        const kmsKeyPolicy = aws.iam.getPolicyDocument(
+        const kmsKeyPolicy = aws.iam.getPolicyDocumentOutput(
             {
                 statements: [
                     {
-                        effect: 'Allow',
                         principals: [
                             {
                                 type: 'AWS',
-                                identifiers: [`arn:aws:iam::${accountId}:root`],
+                                identifiers: [pulumi.interpolate`arn:aws:iam::${accountId}:root`],
                             },
                         ],
                         actions: ['*'],
                         resources: ['*'],
                     },
                     {
-                        effect: 'Allow',
                         principals: [
                             {
                                 type: 'AWS',
-                                identifiers: [`arn:aws:iam::${accountId}:role/${name}`],
+                                identifiers: [
+                                    pulumi.interpolate`arn:aws:iam::${accountId}:role/${name}`,
+                                ],
                             },
                         ],
                         actions: ['kms:Decrypt', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
@@ -189,7 +188,7 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
             name,
             {
                 deletionWindowInDays: kmsDeletionWindow,
-                policy: kmsKeyPolicy.then((policy) => policy.json),
+                policy: kmsKeyPolicy.json,
                 tags,
             },
             { dependsOn: [role], parent: this }
@@ -224,25 +223,26 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
 
     private createLambdaFunction(
         name: string,
-        region: string,
+        region: pulumi.Input<string>,
         role: aws.iam.Role,
         slackWebhookCiphertext: aws.kms.Ciphertext,
         kmsAlias: aws.kms.Alias,
         tags?: Record<string, string>
     ): aws.lambda.Function {
-        // const directory = path.join(__dirname, '/function');
-        // const handler = 'src/index.handler';
-        const directory = path.join(__dirname, '/function/dist');
+        const directory = path.join(__dirname, '/function');
+        // const file = path.join(__dirname, 'function', 'index.js');
         const handler = 'index.handler';
 
-        const assetArchive = new pulumi.asset.AssetArchive({
-            '.': new pulumi.asset.FileArchive(directory),
-        });
+        // const assetArchive = new pulumi.asset.AssetArchive({
+        //     '.': new pulumi.asset.FileArchive(directory),
+        // });
+        const assetArchive = new pulumi.asset.FileArchive(directory);
+        // const assetArchive = new pulumi.asset.FileAsset(file);
 
         return new aws.lambda.Function(
             name,
             {
-                runtime: 'nodejs14.x',
+                runtime: 'nodejs18.x',
                 timeout: 60,
                 role: role.arn,
                 code: assetArchive,
@@ -263,7 +263,7 @@ export class SlackNotificationFunction extends pulumi.ComponentResource {
     private createLogGroup(
         name: string,
         lambdaFunction: aws.lambda.CallbackFunction<aws.sns.TopicEvent, unknown>,
-        logGroupRetentionDays: number,
+        logGroupRetentionDays: pulumi.Input<number>,
         tags?: Record<string, string>
     ): aws.cloudwatch.LogGroup {
         return new aws.cloudwatch.LogGroup(
