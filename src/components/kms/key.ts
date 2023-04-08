@@ -7,9 +7,6 @@ export interface KeyArgs {
     tags?: Record<string, string>;
 }
 
-// ToDo: revisar tags
-// ToDo: revisar opts
-
 export class Key extends pulumi.ComponentResource {
     readonly kmsKey: aws.kms.Key;
 

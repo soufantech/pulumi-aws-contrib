@@ -4,20 +4,17 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 export interface SlackAlarmNotificationArgs {
-    region: pulumi.Input<string>,
-    accountId: pulumi.Input<string>,
+    region: pulumi.Input<string>;
+    accountId: pulumi.Input<string>;
     chatWebhook: pulumi.Input<string>;
-    kmsDeletionWindow?: pulumi.Input<number>;
+    kmsKey: aws.kms.Key;
+    kmsAlias: aws.kms.Alias;
     logGroupRetentionDays?: pulumi.Input<number>;
     tags?: Record<string, string>;
 }
 
 export class SlackAlarmNotification extends pulumi.ComponentResource {
     readonly role: aws.iam.Role;
-
-    readonly kmsKey: aws.kms.Key;
-
-    readonly kmsAlias: aws.kms.Alias;
 
     readonly lambdaFunction: aws.lambda.CallbackFunction<aws.sns.TopicEvent, unknown>;
 
@@ -30,19 +27,10 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
     constructor(name: string, args: SlackAlarmNotificationArgs, opts?: pulumi.ResourceOptions) {
         super('contrib:components:SlackNotificationFunction', name, {}, opts);
 
-        const { region, accountId, chatWebhook, tags } = args;
-        const kmsDeletionWindow = args.kmsDeletionWindow || 7;
+        const { region, accountId, chatWebhook, kmsKey, kmsAlias, tags } = args;
         const logGroupRetentionDays = args.logGroupRetentionDays || 14;
 
         const role = this.createRole(name, region, accountId, tags);
-
-        const { kmsKey, kmsAlias } = this.createKmsKey(
-            name,
-            accountId,
-            role,
-            kmsDeletionWindow,
-            tags
-        );
 
         const chatWebhookCiphertext = this.encrypt(name, kmsKey, chatWebhook);
 
@@ -66,8 +54,6 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
         );
 
         this.role = role;
-        this.kmsKey = kmsKey;
-        this.kmsAlias = kmsAlias;
         this.lambdaFunction = lambdaFunction;
         this.logGroup = logGroup;
         this.snsTopic = snsTopic;
@@ -138,72 +124,6 @@ export class SlackAlarmNotification extends pulumi.ComponentResource {
             },
             { parent: this }
         );
-    }
-
-    private createKmsKey(
-        name: string,
-        accountId: pulumi.Input<string>,
-        role: aws.iam.Role,
-        kmsDeletionWindow: pulumi.Input<number>,
-        tags?: Record<string, string>
-    ): { kmsKey: aws.kms.Key; kmsAlias: aws.kms.Alias } {
-        const kmsKeyPolicy = aws.iam.getPolicyDocumentOutput(
-            {
-                statements: [
-                    {
-                        principals: [
-                            {
-                                type: 'AWS',
-                                identifiers: [pulumi.interpolate`arn:aws:iam::${accountId}:root`],
-                            },
-                        ],
-                        actions: ['*'],
-                        resources: ['*'],
-                    },
-                    {
-                        principals: [
-                            {
-                                type: 'AWS',
-                                identifiers: [
-                                    pulumi.interpolate`arn:aws:iam::${accountId}:role/${name}`,
-                                ],
-                            },
-                        ],
-                        actions: ['kms:Decrypt', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
-                        resources: ['*'],
-                        conditions: [
-                            {
-                                test: 'StringEquals',
-                                variable: 'kms:RequestAlias',
-                                values: [`alias/${name}`],
-                            },
-                        ],
-                    },
-                ],
-            },
-            { parent: this }
-        );
-
-        const kmsKey = new aws.kms.Key(
-            name,
-            {
-                deletionWindowInDays: kmsDeletionWindow,
-                policy: kmsKeyPolicy.json,
-                tags,
-            },
-            { dependsOn: [role], parent: this }
-        );
-
-        const kmsAlias = new aws.kms.Alias(
-            name,
-            {
-                name: `alias/${name}`,
-                targetKeyId: kmsKey.keyId,
-            },
-            { parent: this }
-        );
-
-        return { kmsKey, kmsAlias };
     }
 
     private encrypt(
