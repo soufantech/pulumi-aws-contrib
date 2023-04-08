@@ -80,20 +80,6 @@ export class AlarmNotification extends pulumi.ComponentResource {
             { parent: this }
         );
 
-        const kmsPolicy = aws.iam.getPolicyDocumentOutput(
-            {
-                statements: [
-                    {
-                        actions: ['kms:Decrypt'],
-                        resources: [
-                            pulumi.interpolate`arn:aws:kms:${region}:${accountId}:alias/${name}`,
-                        ],
-                    },
-                ],
-            },
-            { parent: this }
-        );
-
         return new aws.iam.Role(
             name,
             {
@@ -114,10 +100,6 @@ export class AlarmNotification extends pulumi.ComponentResource {
                     {
                         name: 'log-group',
                         policy: logGroupPolicy.json,
-                    },
-                    {
-                        name: 'kms',
-                        policy: kmsPolicy.json,
                     },
                 ],
                 tags,
@@ -145,7 +127,7 @@ export class AlarmNotification extends pulumi.ComponentResource {
         name: string,
         region: pulumi.Input<string>,
         role: aws.iam.Role,
-        slackWebhookCiphertext: aws.kms.Ciphertext,
+        chatWebhookCiphertext: aws.kms.Ciphertext,
         kmsAlias: aws.kms.Alias,
         tags?: Record<string, string>
     ): aws.lambda.Function {
@@ -164,7 +146,7 @@ export class AlarmNotification extends pulumi.ComponentResource {
                 handler,
                 environment: {
                     variables: {
-                        SLACK_WEBHOOK: slackWebhookCiphertext.ciphertextBlob,
+                        CHAT_WEBHOOK: chatWebhookCiphertext.ciphertextBlob,
                         KMS_KEY_ID: kmsAlias.arn,
                         KMS_REGION: region,
                     },

@@ -23,8 +23,8 @@ async function kmsDecrypt(content, key) {
 }
 
 async function doRequest(body) {
-    const decryptedSlackWebhook = await kmsDecrypt(
-        process.env.SLACK_WEBHOOK || '',
+    const decryptedChatWebhook = await kmsDecrypt(
+        process.env.CHAT_WEBHOOK || '',
         process.env.KMS_KEY_ID || ''
     );
 
@@ -34,7 +34,7 @@ async function doRequest(body) {
     };
 
     return new Promise((resolve, reject) => {
-        const req = https.request(decryptedSlackWebhook, options, (res) => {
+        const req = https.request(decryptedChatWebhook, options, (res) => {
             if (res.statusCode === 200) resolve();
             else reject(new Error(`Request with status code ${res.statusCode}`));
 
@@ -162,7 +162,6 @@ function processEvent({ Sns: snsEvent }) {
 
     const color = messageObject.NewStateValue === 'ALARM' ? '#d62728' : '#1f77b4';
     return {
-        channel: process.env.SLACK_CHANNEL,
         attachments: [
             {
                 color,
