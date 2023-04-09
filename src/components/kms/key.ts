@@ -40,11 +40,7 @@ export class Key extends pulumi.ComponentResource {
         this.kmsAlias = kmsAlias;
     }
 
-    createKeyPolicy(
-        name: string,
-        accountId: pulumi.Input<string>,
-        roleArns: pulumi.Input<string>[]
-    ) {
+    createKeyPolicy(name: string, accountId: pulumi.Input<string>, roles: aws.iam.Role[]) {
         const policy = aws.iam.getPolicyDocumentOutput(
             {
                 statements: [
@@ -62,7 +58,7 @@ export class Key extends pulumi.ComponentResource {
                         principals: [
                             {
                                 type: 'AWS',
-                                identifiers: roleArns,
+                                identifiers: roles.map((role) => role.arn),
                             },
                         ],
                         actions: ['kms:Decrypt', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
@@ -86,7 +82,7 @@ export class Key extends pulumi.ComponentResource {
                 keyId: this.kmsKey.keyId,
                 policy: policy.json,
             },
-            { parent: this }
+            { parent: this, dependsOn: [...roles] }
         );
     }
 }
