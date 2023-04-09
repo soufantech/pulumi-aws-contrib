@@ -1,15 +1,8 @@
-import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 import * as iam from '../iam';
 
-export interface RoleArgs {
-    inlinePolicies: aws.types.input.iam.RoleInlinePolicy[];
-    managedPolicies?: pulumi.Input<string>[];
-    assumeRoleStatements?: aws.types.input.iam.GetPolicyDocumentStatementArgs[];
-    maxSessionDuration?: pulumi.Input<number>;
-    tags?: Record<string, pulumi.Input<string>>;
-}
+export type RoleArgs = Omit<iam.RoleArgs, 'path'>;
 
 export class Role extends iam.Role {
     constructor(name: string, args: RoleArgs, opts?: pulumi.CustomResourceOptions) {
@@ -37,4 +30,33 @@ export class Role extends iam.Role {
             opts
         );
     }
+}
+
+export function createEcsRole(
+    name: string,
+    args: RoleArgs,
+    opts?: pulumi.CustomResourceOptions
+): iam.Role {
+    const assumeRoleStatements = [
+        {
+            actions: ['sts:AssumeRole'],
+            principals: [
+                {
+                    identifiers: ['ecs-tasks.amazonaws.com'],
+                    type: 'Service',
+                },
+            ],
+        },
+        ...(args.assumeRoleStatements ?? []),
+    ];
+
+    return new iam.Role(
+        name,
+        {
+            ...args,
+            path: '/ecs/',
+            assumeRoleStatements,
+        },
+        opts
+    );
 }
