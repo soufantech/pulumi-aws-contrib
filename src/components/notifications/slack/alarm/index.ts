@@ -3,6 +3,8 @@ import path from 'path';
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
+import * as lambda from '../../../lambda';
+
 export interface AlarmNotificationArgs {
     region: pulumi.Input<string>;
     accountId: pulumi.Input<string>;
@@ -66,46 +68,16 @@ export class AlarmNotification extends pulumi.ComponentResource {
         accountId: pulumi.Input<string>,
         tags?: Record<string, string>
     ): aws.iam.Role {
-        const logGroupPolicy = aws.iam.getPolicyDocumentOutput(
-            {
-                statements: [
-                    {
-                        actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
-                        resources: [
-                            pulumi.interpolate`arn:aws:logs:${region}:${accountId}:log-group:/aws/lambda/${name}-*:*`,
-                        ],
-                    },
-                ],
-            },
-            { parent: this }
-        );
-
-        return new aws.iam.Role(
+        return lambda.createLambdaRole(
             name,
             {
                 name, // It was necessary because of kms key policy
-                assumeRolePolicy: {
-                    Version: '2012-10-17',
-                    Statement: [
-                        {
-                            Effect: 'Allow',
-                            Principal: {
-                                Service: 'lambda.amazonaws.com',
-                            },
-                            Action: 'sts:AssumeRole',
-                        },
-                    ],
-                },
-                inlinePolicies: [
-                    {
-                        name: 'log-group',
-                        policy: logGroupPolicy.json,
-                    },
-                ],
+                region,
+                accountId,
                 tags,
             },
             { parent: this }
-        );
+        ).role;
     }
 
     private encrypt(
