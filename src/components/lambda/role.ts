@@ -3,14 +3,14 @@ import * as pulumi from '@pulumi/pulumi';
 
 import * as iam from '../iam';
 
-export type RoleArgs = Omit<iam.RoleArgs, 'path'> & {
+export type CreateLambdaRoleArgs = Omit<iam.RoleArgs, 'path'> & {
     accountId: pulumi.Input<string>;
     region: pulumi.Input<string>;
 };
 
 export function createLambdaRole(
     name: string,
-    args: RoleArgs,
+    args: CreateLambdaRoleArgs,
     opts?: pulumi.CustomResourceOptions
 ): iam.Role {
     const { accountId, region } = args;

@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-import { createLambdaRole, RoleArgs } from './role';
+import { createLambdaRole, CreateLambdaRoleArgs } from './role';
 
 export interface AbstractFunctionArgs {
     region: pulumi.Input<string>;
@@ -52,9 +52,8 @@ export abstract class AbstractFunction extends pulumi.ComponentResource {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    protected prepareIamRoleArgs(args: AbstractFunctionArgs): RoleArgs {
+    protected prepareIamRoleArgs(args: AbstractFunctionArgs): CreateLambdaRoleArgs {
         return {
-            // name: this.name, // It is necessary because of resource-based policy (e.g. KMS key policy)
             region: args.region,
             accountId: args.accountId,
             inlinePolicies: args.inlinePolicies,
@@ -63,7 +62,7 @@ export abstract class AbstractFunction extends pulumi.ComponentResource {
         };
     }
 
-    protected createIamRole(args: RoleArgs): aws.iam.Role {
+    protected createIamRole(args: CreateLambdaRoleArgs): aws.iam.Role {
         return createLambdaRole(this.name, args, { parent: this }).role;
     }
 
@@ -86,15 +85,7 @@ export abstract class AbstractFunction extends pulumi.ComponentResource {
     }
 
     protected createLambdaFunction(args: aws.lambda.FunctionArgs): aws.lambda.Function {
-        return new aws.lambda.Function(
-            this.name,
-            {
-                runtime: 'nodejs18.x',
-                timeout: 60,
-                ...args,
-            },
-            { parent: this }
-        );
+        return new aws.lambda.Function(this.name, args, { parent: this });
     }
 
     // eslint-disable-next-line class-methods-use-this

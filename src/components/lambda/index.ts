@@ -1,3 +1,3 @@
-export { RoleArgs, createLambdaRole } from './role';
+export { CreateLambdaRoleArgs, createLambdaRole } from './role';
 export { SimpleFunctionArgs, SimpleFunction } from './simple-function';
 export { EncryptedFunctionArgs, EncryptedFunction } from './encrypted-function';
