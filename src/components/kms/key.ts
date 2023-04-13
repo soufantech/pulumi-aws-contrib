@@ -12,7 +12,7 @@ export class Key extends pulumi.ComponentResource {
 
     readonly kmsAlias: aws.kms.Alias;
 
-    constructor(name: string, args: KeyArgs, opts?: pulumi.CustomResourceOptions) {
+    constructor(name: string, args: KeyArgs, opts?: pulumi.ResourceOptions) {
         super('contrib:components:Key', name, {}, opts);
 
         const alias = args.keyAlias || `alias/${name}`;
