@@ -6,7 +6,9 @@ This component forces the creation of the role inside the `/ecs` path, thus allo
 - Better restriction on the privileges of the IAM Role used to deploy the stack
 - Better control on resource-based policies, SCP and other types of policies
 
-This component is a factory above the `iam.Role` component and beyond the path, it add trust relationship to the ecs-tasks.amazonaws.com service.
+This component is a factory above the `iam.Role` component and beyond the path, it add:
+
+- Trust relationship to the ecs-tasks.amazonaws.com service
 
 ```typescript
 import { ecs } from '@soufantech/pulumi-aws-contrib';
