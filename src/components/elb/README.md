@@ -1,6 +1,26 @@
 ForwardRule
 -----------
 
-A criação de regras de encaminhamento requer informações da VPC, do Load Balancer e do Listener. Esse componente abstrai a busca dessas informações bem como já assume alguns comportamentos padrões, como a configuração do health check e a utilização do listener HTTPS.
+Creating forwarding rules requires VPC, Load Balancer, and Listener information. This component abstracts the search for this information and already assumes some standard behaviors, such as configuring the health check and using the HTTPS listener.
 
-Esse componente também cria um Target Group de maneira transparente.
+This component also transparently creates a Target Group.
+
+```typescript
+import * as pulumi from '@pulumi/pulumi';
+
+import { elb } from '@soufantech/pulumi-aws-contrib';
+
+const config = new pulumi.Config();
+
+const { loadBalancer, targetGroup } = new elb.ForwardRule('main-api', {
+    vpcName: config.require('vpcName'),
+    loadBalancerName: config.require('loadBalancerName'),
+    conditions: [
+        {
+            hostHeader: {
+                values: [config.require('hostName')],
+            },
+        },
+    ],
+});
+```
