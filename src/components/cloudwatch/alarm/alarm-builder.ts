@@ -112,7 +112,7 @@ export class AlarmBuilder {
         return this;
     }
 
-    addDescription(description: string) {
+    addDescription(description: pulumi.Input<string>) {
         this.args.alarmDescription = description;
         return this;
     }
