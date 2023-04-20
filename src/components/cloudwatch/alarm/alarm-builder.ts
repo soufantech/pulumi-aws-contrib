@@ -112,6 +112,11 @@ export class AlarmBuilder {
         return this;
     }
 
+    addDescription(description: string) {
+        this.args.alarmDescription = description;
+        return this;
+    }
+
     threshold(threshold: pulumi.Input<number>) {
         this.args.threshold = threshold;
         return this;
