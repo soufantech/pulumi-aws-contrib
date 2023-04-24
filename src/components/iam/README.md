@@ -13,7 +13,7 @@ Pulumi provides the ARN for many AWS Managed Policies, but it is only a subset o
 ```typescript
 import * as aws from '@pulumi/aws';
 
-const s3RoArn = aws.iam.ManagedPolicy.AmazonS3ReadOnlyAccess
+const s3RoArn = aws.iam.ManagedPolicy.AmazonS3ReadOnlyAccess;
 ```
 
 This function provides an abstraction to build the remaining ARNs in a less verbose way.
@@ -21,7 +21,7 @@ This function provides an abstraction to build the remaining ARNs in a less verb
 ```typescript
 import { iam } from '@soufantech/pulumi-aws-contrib';
 
-const caRo = iam.createManagedPolicyArn('AWSCodeArtifactReadOnlyAccess')
+const caRo = iam.createManagedPolicyArn('AWSCodeArtifactReadOnlyAccess');
 ```
 
 ### createAssumeRolePolicyForUser
@@ -83,10 +83,3 @@ const parameterStorePolicy = iam.policyFactories.createParameterStorePolicy(
 ### Component list
 
 - createParameterStorePolicy
-
-How to contribute
------------------
-
-### Create a new policy factory
-
-_Missing documentation_

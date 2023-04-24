@@ -6,6 +6,21 @@ This component forces the creation of the role inside the `/ecs` path, thus allo
 - Better restriction on the privileges of the IAM Role used to deploy the stack
 - Better control on resource-based policies, SCP and other types of policies
 
+This component is a factory above the `iam.Role` component and beyond the path, it add:
+
+- Trust relationship to the ecs-tasks.amazonaws.com service
+
+```typescript
+import { ecs } from '@soufantech/pulumi-aws-contrib';
+
+const name = 'main-api';
+
+const { role } = ecs.createEcsRole(name, {
+    name,
+    maxSessionDuration: 3600,
+});
+```
+
 Service
 -------
 
@@ -41,7 +56,7 @@ The default setting for the minimum and maximum percentage for `rolling update` 
   - If `desired count = 3`, reducing 1 task would set the `minimum` percentage to approximately `66` and adding 1 task would set the maximum percentage to approximately `133`. That is, for the replacement of tasks to take place or the `minimum` percentage cannot be greater than `66` or the maximum percentage cannot be less than `133`. Due to the rounding suggested `60/140` as limits.
 - If your environment has a high number of tasks, beware of the default `maximum` percentage value (i.e. `200`), as this can generate twice as many tasks during deployment.
 
-Lastly, the `circuit breaker` is enabled by default, care must be taken not to assume that the task has been deployed while actually being rolled back.
+Lastly, the `circuit breaker` is enabled by default, care must be taken not to assume that the task has been deployed while actually being rolled back. To work around this problem, deploy events can be used to send notifications. For example, using the `notifications.slack.EcsDeployNotification` and `notifications.BindEcsDeployEventToLambdaFunction` components.
 
 ### Auto Scaling
 

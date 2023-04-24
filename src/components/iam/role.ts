@@ -2,6 +2,7 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
 export interface RoleArgs {
+    name?: pulumi.Input<string>;
     inlinePolicies?: aws.types.input.iam.RoleInlinePolicy[];
     managedPolicies?: pulumi.Input<string>[];
     assumeRoleStatements?: aws.types.input.iam.GetPolicyDocumentStatementArgs[];
@@ -23,7 +24,7 @@ export class Role {
         this.role = new aws.iam.Role(
             name,
             {
-                name,
+                name: args.name,
                 path: args.path,
                 assumeRolePolicy: assumeRolePolicy.json,
                 inlinePolicies: args.inlinePolicies,

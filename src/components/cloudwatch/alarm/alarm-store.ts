@@ -26,7 +26,7 @@ export class AlarmStore extends pulumi.ComponentResource {
         return this.alarms;
     }
 
-    getArns() {
+    getArns(): pulumi.Output<string>[] {
         return this.alarms.map((alarm) => alarm.arn);
     }
 }

@@ -1,2 +1,2 @@
-export { RoleArgs, Role } from './role';
+export { CreateEcsRoleArgs, createEcsRole } from './role';
 export { ServiceArgs, Service } from './service';

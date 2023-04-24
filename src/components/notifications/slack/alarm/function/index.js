@@ -23,8 +23,8 @@ async function kmsDecrypt(content, key) {
 }
 
 async function doRequest(body) {
-    const decryptedSlackWebhook = await kmsDecrypt(
-        process.env.SLACK_WEBHOOK || '',
+    const decryptedChatWebhook = await kmsDecrypt(
+        process.env.CHAT_WEBHOOK || '',
         process.env.KMS_KEY_ID || ''
     );
 
@@ -34,7 +34,7 @@ async function doRequest(body) {
     };
 
     return new Promise((resolve, reject) => {
-        const req = https.request(decryptedSlackWebhook, options, (res) => {
+        const req = https.request(decryptedChatWebhook, options, (res) => {
             if (res.statusCode === 200) resolve();
             else reject(new Error(`Request with status code ${res.statusCode}`));
 
@@ -51,20 +51,26 @@ async function doRequest(body) {
 }
 
 function makeMessageBlocks(messageObject) {
+    const emojiDict = {
+        OK: ':white_check_mark:',
+        ALARM: ':rotating_light:',
+    };
+
     const title = messageObject.AlarmName;
     const description = messageObject.AlarmDescription || 'No description';
     const status = messageObject.NewStateValue;
-    const emoji = status === 'ALARM' ? ':rotating_light:' : ':ballot_box_with_check:';
+    const emoji = emojiDict[messageObject.NewStateValue];
     const timestamp = messageObject.StateChangeTime.replace(
         /([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}).*(\+[0-9]+)/,
         '$1 $2 $3'
     );
-    const account = messageObject.AWSAccountId;
+    const accountId = messageObject.AWSAccountId;
     const regionName = messageObject.Region;
     const reason = messageObject.NewStateReason;
-    const alarmUri = `https://${
+    const referUri = `https://${
         messageObject.AlarmArn.split(':')[3]
     }.console.aws.amazon.com/cloudwatch/home#alarmsV2:alarm/${encodeURIComponent(title)}`;
+    const referMessage = 'View alarm in CloudWatch';
     const namespace = messageObject.Trigger.Namespace;
     const metric = messageObject.Trigger.MetricName;
     const dimensions = messageObject.Trigger.Dimensions;
@@ -97,7 +103,7 @@ function makeMessageBlocks(messageObject) {
                 },
                 {
                     type: 'mrkdwn',
-                    text: `*Account:*\n${account}`,
+                    text: `*Account:*\n${accountId}`,
                 },
             ],
         },
@@ -125,7 +131,7 @@ function makeMessageBlocks(messageObject) {
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: `<${alarmUri}|View alarm in CloudWatch>`,
+                text: `<${referUri}|${referMessage}>`,
             },
         },
         {
@@ -160,9 +166,14 @@ function processEvent({ Sns: snsEvent }) {
 
     const messageObject = JSON.parse(snsEvent.Message);
 
-    const color = messageObject.NewStateValue === 'ALARM' ? '#d62728' : '#1f77b4';
+    const colorDict = {
+        OK: '#1f77b4',
+        ALARM: '#d62728',
+    };
+
+    const color = colorDict[messageObject.NewStateValue];
+
     return {
-        channel: process.env.SLACK_CHANNEL,
         attachments: [
             {
                 color,

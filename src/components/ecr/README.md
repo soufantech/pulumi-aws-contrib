@@ -10,8 +10,10 @@ This component assumes some security settings by default, for example:
 You can also specify a list of tag prefixes to which a retention policy will apply as well as the number of images to keep.
 
 ```typescript
-const { ecrRepository } = new ecr.Repository(name, {
-    tagPrefixes: ['dev', 'test', 'prod'],
+import { ecr } from '@soufantech/pulumi-aws-contrib';
+
+const { ecrRepository } = new ecr.Repository('main-api', {
+    tagPrefixes: ['dev', 'stg', 'prd'],
     tagRetention: 3,
 });
 ```
