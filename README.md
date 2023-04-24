@@ -1,3 +1,8 @@
+<div style="background-color: #d62728" align="center">
+Beta project, i.e. minor version may break compatibility
+</div>
+<br />
+
 <div align="center">
   <img src="https://avatars2.githubusercontent.com/u/61063724?s=200&v=4" width="100px">
 </div>
