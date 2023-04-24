@@ -12,14 +12,16 @@ const kmsKey = new kms.Key(kmsKeyName, {});
 const alarmNotification = new notifications.slack.AlarmNotification('alarm-notifications', {
   region,
   accountId,
-  chatWebhook: config.requireSecret('webhook'),
   kmsKey: kmsKey.kmsKey,
   kmsAlias: kmsKey.kmsAlias,
+  encryptedEnvVars: {
+    CHAT_WEBHOOK: config.requireSecret('webhook'),
+  },
 });
 
 // ...
 
-const kmsKeyPolicy = kmsKey.createKeyPolicy(kmsKeyName, accountId, [alarmNotification.role.arn]);
+const kmsKeyPolicy = kmsKey.createKeyPolicy(kmsKeyName, accountId, [alarmNotification.iamRole]);
 
 // ...
 

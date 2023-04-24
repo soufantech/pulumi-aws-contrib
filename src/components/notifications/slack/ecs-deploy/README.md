@@ -12,14 +12,16 @@ const kmsKey = new kms.Key(kmsKeyName, {});
 const ecsDeployNotification = new notifications.slack.EcsDeployNotification('ecs-deploy-notifications', {
   region,
   accountId,
-  chatWebhook: config.requireSecret('webhook'),
   kmsKey: kmsKey.kmsKey,
   kmsAlias: kmsKey.kmsAlias,
+  encryptedEnvVars: {
+    CHAT_WEBHOOK: config.requireSecret('webhook'),
+  },
 });
 
 // ...
 
-const kmsKeyPolicy = kmsKey.createKeyPolicy(kmsKeyName, accountId, [ecsDeployNotification.role.arn]);
+const kmsKeyPolicy = kmsKey.createKeyPolicy(kmsKeyName, accountId, [ecsDeployNotification.iamRole]);
 
 // ...
 
