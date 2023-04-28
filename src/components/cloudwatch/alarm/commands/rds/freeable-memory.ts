@@ -26,9 +26,11 @@ export class FreeableMemory extends CreateAlarmCommand {
         const metricName = 'FreeableMemory';
         const stat = 'Average';
         const dimensions = { DBInstanceIdentifier: dbInstanceIdentifier };
+        const description = `Alert if ${metricName} of ${dbInstanceIdentifier} is less than or equal to ${this.threshold} for ${this.extraConfigs?.datapointsToAlarm} datapoint(s) within ${this.extraConfigs?.evaluationPeriods} period(s) of ${this.extraConfigs?.period} seconds.`;
 
         const alarmBuilder = new AlarmBuilder()
             .name(logicalName, this.extraConfigs?.suffix)
+            .addDescription(description)
             .threshold(this.threshold)
             .comparisonOperator(comparisonOperator)
             .evaluationPeriods(this.extraConfigs?.evaluationPeriods)
