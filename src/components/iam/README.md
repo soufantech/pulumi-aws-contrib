@@ -14,6 +14,7 @@ Pulumi provides the ARN for many AWS Managed Policies, but it is only a subset o
 import * as aws from '@pulumi/aws';
 
 const s3RoArn = aws.iam.ManagedPolicy.AmazonS3ReadOnlyAccess;
+const cwAgentServerArn = aws.types.enums.iam.ManagedPolicy.CloudWatchAgentServerPolicy;
 ```
 
 This function provides an abstraction to build the remaining ARNs in a less verbose way.
