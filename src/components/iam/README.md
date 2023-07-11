@@ -44,9 +44,7 @@ Similarly this method provides a simplified way to enable an IAM User to assume 
 ```typescript
 import { iam } from '@soufantech/pulumi-aws-contrib';
 
-const accountId = pulumi.output(
-    aws.getCallerIdentity().then((callerIdentity) => callerIdentity.accountId)
-);
+const accountId = pulumi.output(aws.getCallerIdentity()).accountId;
 
 const ghaUser = 'gh-actions';
 
