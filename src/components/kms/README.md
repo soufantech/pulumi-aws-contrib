@@ -8,6 +8,8 @@ This component also allows late configuration of access policies, allowing other
 ```typescript
 import { kms, notifications } from '@soufantech/pulumi-aws-contrib';
 
+// ...
+
 const kmsKeyName = 'notifications';
 const kmsKey = new kms.Key(kmsKeyName, {});
 
@@ -21,8 +23,8 @@ const ecsDeployNotification = new notifications.slack.EcsDeployNotification(
     {...}
 );
 
-kmsKey.createKeyPolicy(kmsKeyName, accountId, [
-    alarmNotification.iamRole,
-    ecsDeployNotification.iamRole,
+kmsKey.allowRolesUseKeyToDecrypt([
+    alarmNotification.iamRole.arn,
+    ecsDeployNotification.iamRole.arn,
 ]);
 ```
