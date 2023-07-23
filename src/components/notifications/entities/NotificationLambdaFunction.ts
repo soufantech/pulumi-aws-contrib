@@ -1,3 +1,6 @@
+import { execSync } from 'child_process';
+import { randomUUID } from 'crypto';
+import { tmpdir } from 'os';
 import path from 'path';
 
 import * as aws from '@pulumi/aws';
@@ -5,27 +8,25 @@ import * as pulumi from '@pulumi/pulumi';
 
 import * as lambda from '../../lambda';
 
+export interface NotificationLambdaFunctionInput
+    extends Omit<lambda.EncryptedFunctionArgs, 'code'> {
+    codePath: string;
+    handler: string;
+}
+
 export class NotificationLambdaFunction extends lambda.EncryptedFunction {
-    readonly snsTopic: aws.sns.Topic;
+    private codePath: string;
 
-    readonly snsTopicEventSubscription: aws.sns.TopicEventSubscription;
+    private handler: string;
 
-    constructor(name: string, args: lambda.EncryptedFunctionArgs, opts?: pulumi.ResourceOptions) {
+    constructor(
+        name: string,
+        { handler, codePath, ...args }: NotificationLambdaFunctionInput,
+        opts?: pulumi.ResourceOptions
+    ) {
         super(name, args, opts);
-        aws.sns.getTopic({
-            name,
-        });
-        const snsTopic = this.createSnsTopic(name, args.tags);
-
-        const snsTopicEventSubscription =
-            NotificationLambdaFunction.subscribeLambdaFunctionOnSnsTopic(
-                name,
-                this.lambdaFunction,
-                snsTopic
-            );
-
-        this.snsTopic = snsTopic;
-        this.snsTopicEventSubscription = snsTopicEventSubscription;
+        this.codePath = codePath;
+        this.handler = handler;
     }
 
     protected prepareLambdaFunctionArgs(
@@ -34,26 +35,19 @@ export class NotificationLambdaFunction extends lambda.EncryptedFunction {
     ): aws.lambda.FunctionArgs {
         const lambdaFunctionArgs = super.prepareLambdaFunctionArgs(iamRole, args);
 
-        const directory = path.join(__dirname, '/function');
-        const handler = 'index.handler';
+        const directory = path.join(tmpdir(), randomUUID());
+        execSync(`npx tsc --outDir ${directory} ${this.codePath}`);
+
         const assetArchive = new pulumi.asset.FileArchive(directory);
 
         return {
             ...lambdaFunctionArgs,
             code: assetArchive,
-            handler,
+            handler: this.handler,
         };
     }
 
-    private createSnsTopic(name: string, tags?: Record<string, string>): aws.sns.Topic {
-        return new aws.sns.Topic(name, { tags }, { parent: this });
-    }
-
-    private static subscribeLambdaFunctionOnSnsTopic(
-        name: string,
-        lambdaFunction: aws.lambda.Function,
-        snsTopic: aws.sns.Topic
-    ): aws.sns.TopicEventSubscription {
-        return snsTopic.onEvent(name, lambdaFunction);
+    subscribeNotificationLambdaToSnsTopic(snsTopic: aws.sns.Topic): aws.sns.TopicEventSubscription {
+        return snsTopic.onEvent(this.name, this.lambdaFunction);
     }
 }
