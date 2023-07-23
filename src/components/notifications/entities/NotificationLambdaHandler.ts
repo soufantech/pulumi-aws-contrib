@@ -3,6 +3,10 @@ import { KMS } from '@aws-sdk/client-kms';
 import { SnsEvent } from './SnsEvent';
 
 export abstract class NotificationLambdaHandler {
+    constructor() {
+        this.handle = this.handle.bind(this);
+    }
+
     // eslint-disable-next-line
     protected async kmsDecrypt(content: string, key: string) {
         const region = process.env.KMS_REGION || '';
@@ -22,11 +26,11 @@ export abstract class NotificationLambdaHandler {
     async handle(event: SnsEvent) {
         console.info('[INFO]:Received event:', JSON.stringify(event));
         try {
-            const messages = await Promise.all(
+            const notifications = await Promise.all(
                 event.Records.map((evRecord) => this.processEvent(JSON.parse(evRecord.Sns.Message)))
             );
-            console.debug(`[DEBUG]:Sending ${messages.length} msgs`);
-            await Promise.all(messages.map((message) => this.sendNotification(message)));
+            console.debug(`[DEBUG]:Sending ${notifications.length} msgs`);
+            await Promise.all(notifications.map((message) => this.sendNotification(message)));
             console.info('[INFO]:Done!');
         } catch (error) {
             if (error instanceof Error) {
