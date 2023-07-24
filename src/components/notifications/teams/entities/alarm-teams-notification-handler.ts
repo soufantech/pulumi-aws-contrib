@@ -1,7 +1,7 @@
-import { AlarmEvent } from '../../entities/AlarmEvent';
-import { TeamsNotificationFunction } from './TeamsNotificationFunction';
+import { AlarmEvent } from '../../entities/alarm-event';
+import { TeamsNotificationHandler } from './teams-notification-handler';
 
-class AlarmTeamsNotificationFunction extends TeamsNotificationFunction {
+class AlarmTeamsNotificationHandler extends TeamsNotificationHandler {
     private alarmColor = {
         OK: 'good',
         ALARM: 'attention',
@@ -146,5 +146,5 @@ class AlarmTeamsNotificationFunction extends TeamsNotificationFunction {
     }
 }
 
-const lambda = new AlarmTeamsNotificationFunction(process.env.TEAMS_WEBHOOK || '');
+const lambda = new AlarmTeamsNotificationHandler(process.env.TEAMS_WEBHOOK || '');
 export const { handle } = lambda;

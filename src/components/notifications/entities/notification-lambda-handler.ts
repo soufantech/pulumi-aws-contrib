@@ -1,6 +1,6 @@
 import { KMS } from '@aws-sdk/client-kms';
 
-import { SnsEvent } from './SnsEvent';
+import { SnsEvent } from './sns-event';
 
 export abstract class NotificationLambdaHandler {
     constructor() {

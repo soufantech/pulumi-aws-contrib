@@ -1,6 +1,6 @@
-import { NotificationLambdaHandler } from '../../entities/NotificationLambdaHandler';
+import { NotificationLambdaHandler } from '../../entities/notification-lambda-handler';
 
-export abstract class TeamsNotificationFunction extends NotificationLambdaHandler {
+export abstract class TeamsNotificationHandler extends NotificationLambdaHandler {
     constructor(protected encryptedWebhook: string) {
         super();
     }
