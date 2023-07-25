@@ -11,8 +11,7 @@ export class TeamsNotificationFactory {
     ) {
         return new NotificationLambdaFunction(name, {
             ...args,
-            codePath: resolve(__dirname, '..', 'entities', 'alarm-teams-notification-handler.ts'),
-            handler: 'alarm-teams-notification-handler.handle',
+            handler: resolve(__dirname, '..', 'entities', 'alarm-teams-notification-handler'),
         });
     }
 
@@ -22,13 +21,7 @@ export class TeamsNotificationFactory {
     ) {
         return new NotificationLambdaFunction(name, {
             ...args,
-            codePath: resolve(
-                __dirname,
-                '..',
-                'entities',
-                'ecs-deploy-teams-notification-handler.ts'
-            ),
-            handler: 'ecs-deploy-teams-notification-handler.handle',
+            handler: resolve(__dirname, '..', 'entities', 'ecs-deploy-teams-notification-handler'),
         });
     }
 }

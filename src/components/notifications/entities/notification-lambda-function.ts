@@ -8,46 +8,37 @@ import * as pulumi from '@pulumi/pulumi';
 
 import * as lambda from '../../lambda';
 
-export interface NotificationLambdaFunctionInput
-    extends Omit<lambda.EncryptedFunctionArgs, 'code'> {
-    codePath: string;
-    handler: string;
-}
+export type NotificationLambdaFunctionInput = Omit<lambda.EncryptedFunctionArgs, 'code'> &
+    Required<lambda.EncryptedFunctionArgs['handler']>;
 
 export class NotificationLambdaFunction extends lambda.EncryptedFunction {
-    private codePath: string;
-
-    private handler: string;
-
-    constructor(
-        name: string,
-        { handler, codePath, ...args }: NotificationLambdaFunctionInput,
-        opts?: pulumi.ResourceOptions
-    ) {
-        super(name, args, opts);
-        this.codePath = codePath;
-        this.handler = handler;
-    }
-
     protected prepareLambdaFunctionArgs(
         iamRole: aws.iam.Role,
         args: lambda.EncryptedFunctionArgs
     ): aws.lambda.FunctionArgs {
         const lambdaFunctionArgs = super.prepareLambdaFunctionArgs(iamRole, args);
 
-        const directory = path.join(tmpdir(), randomUUID());
-        execSync(`npx tsc --outDir ${directory} ${this.codePath}`);
+        const outDir = path.join(tmpdir(), randomUUID(), 'index.js');
+        execSync(
+            `npx esbuild --packages="external" --bundle --outfile=${outDir} ${args.handler}.js`
+        );
 
-        const assetArchive = new pulumi.asset.FileArchive(directory);
+        const assetArchive = new pulumi.asset.FileArchive(outDir);
 
         return {
             ...lambdaFunctionArgs,
             code: assetArchive,
-            handler: this.handler,
+            handler: 'index.handler',
         };
     }
 
-    subscribeNotificationLambdaToSnsTopic(snsTopic: aws.sns.Topic): aws.sns.TopicEventSubscription {
-        return snsTopic.onEvent(this.name, this.lambdaFunction);
+    subscribeNotificationLambdaToSnsTopic(
+        snsTopicArn: string | pulumi.Input<string>
+    ): aws.sns.TopicSubscription {
+        return new aws.sns.TopicSubscription(`topic-subscription-${this.name}`, {
+            endpoint: this.lambdaFunction.arn,
+            protocol: 'lambda',
+            topic: snsTopicArn,
+        });
     }
 }
