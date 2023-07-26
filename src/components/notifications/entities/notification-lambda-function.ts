@@ -33,13 +33,21 @@ export class NotificationLambdaFunction extends lambda.EncryptedFunction {
         };
     }
 
-    subscribeNotificationLambdaToSnsTopic(
-        snsTopicArn: string | pulumi.Input<string>
-    ): aws.sns.TopicSubscription {
-        return new aws.sns.TopicSubscription(`topic-subscription-${this.name}`, {
+    subscribeNotificationLambdaToSnsTopic(snsTopicArn: string | pulumi.Input<string>) {
+        const lambdaPermission = new aws.lambda.Permission(`sns-permission-${this.name}`, {
+            action: 'lambda:InvokeFunction',
+            function: this.lambdaFunction.name,
+            principal: 'sns.amazonaws.com',
+            sourceArn: snsTopicArn,
+        });
+        const subscription = new aws.sns.TopicSubscription(`topic-subscription-${this.name}`, {
             endpoint: this.lambdaFunction.arn,
             protocol: 'lambda',
             topic: snsTopicArn,
         });
+        return {
+            lambdaPermission,
+            subscription,
+        };
     }
 }
