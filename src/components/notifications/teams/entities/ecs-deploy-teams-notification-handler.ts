@@ -109,5 +109,8 @@ class EcsDeployTeamsNotificationHandler extends TeamsNotificationHandler {
     }
 }
 
-const lambda = new EcsDeployTeamsNotificationHandler(process.env.TEAMS_WEBHOOK || '');
+const lambda = new EcsDeployTeamsNotificationHandler(
+    process.env.CHAT_WEBHOOK || '',
+    process.env.KMS_KEY_ID || ''
+);
 export const { handle } = lambda;

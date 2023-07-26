@@ -19,9 +19,9 @@ export class NotificationLambdaFunction extends lambda.EncryptedFunction {
         const lambdaFunctionArgs = super.prepareLambdaFunctionArgs(iamRole, args);
 
         const outDir = path.join(tmpdir(), randomUUID());
-        const ourFile = path.join(outDir, 'index.js');
+        const outFile = path.join(outDir, 'index.js');
         execSync(
-            `npx esbuild --packages="external" --bundle --outfile=${ourFile} ${args.handler}.js`
+            `npx esbuild --platform=node --bundle --external:"@aws-sdk*" --outfile=${outFile} ${args.handler}.js`
         );
 
         const assetArchive = new pulumi.asset.FileArchive(outDir);
@@ -29,7 +29,7 @@ export class NotificationLambdaFunction extends lambda.EncryptedFunction {
         return {
             ...lambdaFunctionArgs,
             code: assetArchive,
-            handler: 'index.handler',
+            handler: 'index.handle',
         };
     }
 

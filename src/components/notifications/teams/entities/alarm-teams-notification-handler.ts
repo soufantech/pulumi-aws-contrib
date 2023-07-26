@@ -146,5 +146,8 @@ class AlarmTeamsNotificationHandler extends TeamsNotificationHandler {
     }
 }
 
-const lambda = new AlarmTeamsNotificationHandler(process.env.TEAMS_WEBHOOK || '');
+const lambda = new AlarmTeamsNotificationHandler(
+    process.env.CHAT_WEBHOOK || '',
+    process.env.KMS_KEY_ID || ''
+);
 export const { handle } = lambda;

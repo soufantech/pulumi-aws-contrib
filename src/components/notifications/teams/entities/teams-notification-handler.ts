@@ -1,7 +1,7 @@
 import { NotificationLambdaHandler } from '../../entities/notification-lambda-handler';
 
 export abstract class TeamsNotificationHandler extends NotificationLambdaHandler {
-    constructor(protected encryptedWebhook: string) {
+    constructor(protected encryptedWebhook: string, protected encryptedWebhookKey: string) {
         super();
     }
 
@@ -24,13 +24,16 @@ export abstract class TeamsNotificationHandler extends NotificationLambdaHandler
             ],
         };
 
-        const response = await fetch(await this.kmsDecrypt(this.encryptedWebhook, ''), {
-            method: 'POST',
-            body: JSON.stringify(card),
-            headers: {
-                'content-type': 'application/vnd.microsoft.teams.card.o365connector',
-            },
-        });
+        const response = await fetch(
+            await this.kmsDecrypt(this.encryptedWebhook, this.encryptedWebhookKey),
+            {
+                method: 'POST',
+                body: JSON.stringify(card),
+                headers: {
+                    'content-type': 'application/vnd.microsoft.teams.card.o365connector',
+                },
+            }
+        );
 
         const responseBody = await response.text();
         if (!response.ok || responseBody.includes('Microsoft Teams endpoint returned HTTP error')) {
