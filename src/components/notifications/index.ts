@@ -1,8 +1,5 @@
-import * as slack from './slack';
+import * as teams from './teams';
 
-export { slack };
+export * from './utils';
 
-export {
-    BindEcsDeployEventToLambdaFunctionArgs,
-    BindEcsDeployEventToLambdaFunction,
-} from './utils/bind-ecs-deploy-event-to-lambda-function';
+export { teams };

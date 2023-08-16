@@ -1,29 +1,27 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-export interface BindEcsDeployEventToLambdaFunctionArgs {
-    functionName: pulumi.Input<string>;
+export interface BindEcsDeployEventToSnsTopicArgs {
+    topicName: pulumi.Input<string>;
     resourceArn: pulumi.Input<string>;
     tags?: Record<string, pulumi.Input<string>>;
 }
 
-export class BindEcsDeployEventToLambdaFunction extends pulumi.ComponentResource {
+export class BindEcsDeployEventToSnsTopic extends pulumi.ComponentResource {
     readonly eventRule: aws.cloudwatch.EventRule;
 
     readonly eventTarget: aws.cloudwatch.EventTarget;
 
-    readonly lambdaPermission: aws.lambda.Permission;
-
     constructor(
         name: string,
-        args: BindEcsDeployEventToLambdaFunctionArgs,
-        opts?: pulumi.CustomResourceOptions
+        args: BindEcsDeployEventToSnsTopicArgs,
+        opts?: pulumi.ComponentResourceOptions
     ) {
-        super('contrib:components:BindEcsDeployEventToLambdaFunction', name, {}, opts);
+        super('contrib:components:BindEcsDeployEventToSnsTopic', name, {}, opts);
 
-        const { functionName, resourceArn, tags } = args;
+        const { topicName, resourceArn, tags } = args;
 
-        const lambdaFunction = aws.lambda.getFunctionOutput({ functionName });
+        const snsTopic = aws.sns.getTopicOutput({ name: topicName });
 
         const eventDescription = 'ECS Deployment State Change';
         const eventPattern = pulumi.output(resourceArn).apply((arn) =>
@@ -48,24 +46,12 @@ export class BindEcsDeployEventToLambdaFunction extends pulumi.ComponentResource
             name,
             {
                 rule: eventRule.name,
-                arn: lambdaFunction.arn,
-            },
-            { parent: this }
-        );
-
-        const lambdaPermission = new aws.lambda.Permission(
-            name,
-            {
-                action: 'lambda:InvokeFunction',
-                function: lambdaFunction.functionName,
-                principal: 'events.amazonaws.com',
-                sourceArn: eventRule.arn,
+                arn: snsTopic.arn,
             },
             { parent: this }
         );
 
         this.eventRule = eventRule;
         this.eventTarget = eventTarget;
-        this.lambdaPermission = lambdaPermission;
     }
 }
