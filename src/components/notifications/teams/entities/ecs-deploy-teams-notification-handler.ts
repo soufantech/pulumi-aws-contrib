@@ -4,8 +4,8 @@ import { TeamsNotificationHandler } from './teams-notification-handler';
 class EcsDeployTeamsNotificationHandler extends TeamsNotificationHandler {
     private deployColors = {
         SERVICE_DEPLOYMENT_IN_PROGRESS: '#FF8C00',
-        SERVICE_DEPLOYMENT_COMPLETED: 'good',
-        SERVICE_DEPLOYMENT_FAILED: 'attention',
+        SERVICE_DEPLOYMENT_COMPLETED: '#1f77b4',
+        SERVICE_DEPLOYMENT_FAILED: '#d62728',
     };
 
     async processEvent(eventObject: EcsDeployEvent) {

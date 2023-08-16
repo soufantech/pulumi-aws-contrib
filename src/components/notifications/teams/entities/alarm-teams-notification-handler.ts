@@ -3,8 +3,8 @@ import { TeamsNotificationHandler } from './teams-notification-handler';
 
 class AlarmTeamsNotificationHandler extends TeamsNotificationHandler {
     private alarmColor = {
-        OK: 'good',
-        ALARM: 'attention',
+        OK: '#1f77b4',
+        ALARM: '#d62728',
     };
 
     async processEvent(messageObject: AlarmEvent) {
