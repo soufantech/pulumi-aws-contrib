@@ -33,7 +33,7 @@ export class NotificationLambdaFunction extends lambda.EncryptedFunction {
         };
     }
 
-    subscribeNotificationLambdaToSnsTopic(snsTopicArn: string | pulumi.Input<string>) {
+    subscribeNotificationLambdaToSnsTopic(snsTopicArn: pulumi.Input<string>) {
         const lambdaPermission = new aws.lambda.Permission(`sns-permission-${this.name}`, {
             action: 'lambda:InvokeFunction',
             function: this.lambdaFunction.name,
