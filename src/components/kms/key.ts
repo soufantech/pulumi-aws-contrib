@@ -5,6 +5,7 @@ export interface KeyArgs {
     keyAlias?: pulumi.Input<string>;
     kmsDeletionWindow?: pulumi.Input<number>;
     tags?: Record<string, string>;
+    multiRegion?: pulumi.Input<boolean>;
 }
 
 export class Key extends pulumi.ComponentResource {
@@ -21,11 +22,13 @@ export class Key extends pulumi.ComponentResource {
 
         const alias = args.keyAlias || `alias/${name}`;
         const kmsDeletionWindow = args.kmsDeletionWindow || 7;
+        const kmsMultiRegion = args.multiRegion || false;
 
         const kmsKey = new aws.kms.Key(
             name,
             {
                 deletionWindowInDays: kmsDeletionWindow,
+                multiRegion: kmsMultiRegion,
                 tags: args.tags,
             },
             { parent: this }
