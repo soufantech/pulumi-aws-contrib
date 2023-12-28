@@ -1,7 +1,10 @@
 import { NotificationLambdaHandler } from '../../entities/notification-lambda-handler';
 
 export abstract class TeamsNotificationHandler extends NotificationLambdaHandler {
-    constructor(protected encryptedWebhook: string, protected encryptedWebhookKey: string) {
+    constructor(
+        protected encryptedWebhook: string,
+        protected encryptedWebhookKey: string
+    ) {
         super();
     }
 

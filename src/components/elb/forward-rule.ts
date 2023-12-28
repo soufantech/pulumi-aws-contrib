@@ -7,7 +7,7 @@ export interface ForwardRuleArgs {
     conditions: pulumi.Input<pulumi.Input<aws.types.input.lb.ListenerRuleCondition>[]>;
     targetPort?: pulumi.Input<number>;
     targetProtocol?: pulumi.Input<string>;
-    healthCheck?: pulumi.Input<aws.types.input.lb.TargetGroupHealthCheck>
+    healthCheck?: pulumi.Input<aws.types.input.lb.TargetGroupHealthCheck>;
     listenerPort?: pulumi.Input<number>;
     name?: pulumi.Input<string>;
     tags?: Record<string, pulumi.Input<string>>;

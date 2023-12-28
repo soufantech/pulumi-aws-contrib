@@ -18,9 +18,9 @@ class AlarmTeamsNotificationHandler extends TeamsNotificationHandler {
         const account = messageObject.AWSAccountId;
         const regionName = messageObject.Region;
         const reason = messageObject.NewStateReason;
-        const alarmUri = `https://${
-            messageObject.AlarmArn?.split(':')[3]
-        }.console.aws.amazon.com/cloudwatch/home#alarmsV2:alarm/${encodeURIComponent(title)}`;
+        const alarmUri = `https://${messageObject.AlarmArn?.split(
+            ':'
+        )[3]}.console.aws.amazon.com/cloudwatch/home#alarmsV2:alarm/${encodeURIComponent(title)}`;
         const namespace = messageObject.Trigger.Namespace;
         const metric = messageObject.Trigger.MetricName;
         const dimensions = messageObject.Trigger.Dimensions;

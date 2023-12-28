@@ -21,9 +21,9 @@ extends:
   - airbnb-base
   - airbnb-typescript/base
   - plugin:@typescript-eslint/recommended
-  - prettier
+  - plugin:prettier/recommended
   - plugin:sonarjs/recommended
-  - plugin:security/recommended
+  - plugin:security/recommended-legacy
 settings:
   import/resolver:
     node:
