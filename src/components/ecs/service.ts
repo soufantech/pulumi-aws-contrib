@@ -74,10 +74,13 @@ export class Service extends pulumi.ComponentResource {
         const environment = args.environment ?? {};
 
         const defaultTags = aws.getDefaultTagsOutput().tags.apply((tags) =>
-            Object.keys(tags).reduce((acc, key) => {
-                acc.push({ key, value: tags[key] });
-                return acc;
-            }, [] as { key: string; value: string }[])
+            Object.keys(tags).reduce(
+                (acc, key) => {
+                    acc.push({ key, value: tags[key] });
+                    return acc;
+                },
+                [] as { key: string; value: string }[]
+            )
         );
 
         return new awsn.ecs.TaskDefinition(

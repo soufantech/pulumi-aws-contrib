@@ -6,8 +6,8 @@ import { createLambdaRole, CreateLambdaRoleArgs } from './role';
 export interface AbstractFunctionArgs {
     region: pulumi.Input<string>;
     accountId: pulumi.Input<string>;
-    inlinePolicies?: aws.types.input.iam.RoleInlinePolicy[],
-    managedPolicies?: pulumi.Input<string>[],
+    inlinePolicies?: aws.types.input.iam.RoleInlinePolicy[];
+    managedPolicies?: pulumi.Input<string>[];
     code?: pulumi.asset.Archive;
     handler?: pulumi.Input<string>;
     envVars?: Record<string, pulumi.Input<string>>;
