@@ -31,7 +31,7 @@ type AnomalyDetectionDto = {
 export class AlarmBuilder {
     private args: Partial<aws.cloudwatch.MetricAlarmArgs>;
 
-    private metricQueries: aws.types.input.cloudwatch.MetricAlarmMetricQuery[];
+    private metricQueries: pulumi.Input<aws.types.input.cloudwatch.MetricAlarmMetricQuery>[];
 
     private isAnomaly: boolean;
 
@@ -160,11 +160,15 @@ export class AlarmBuilder {
     }
 
     private ensurePeriodInMetrics() {
-        this.metricQueries = this.metricQueries.map((metricQuery) => {
-            const { metric } = metricQuery;
-            if (metric) {
-                const asMetric = <aws.types.input.cloudwatch.MetricAlarmMetricQueryMetric>metric;
-                if (!asMetric.period || asMetric.period <= 0) {
+        this.metricQueries = this.metricQueries.map((metricQueryInput) => {
+            return pulumi.all([metricQueryInput]).apply(([metricQuery]) => {
+                const { metric } = metricQuery;
+
+                if (!metric) return pulumi.output(metricQuery);
+
+                return pulumi.output(metric.period).apply((period) => {
+                    if (period > 0) return metricQuery;
+
                     return {
                         ...metricQuery,
                         metric: {
@@ -172,9 +176,8 @@ export class AlarmBuilder {
                             period: this.isShort ? constants.SHORT_PERIOD : constants.LONG_PERIOD,
                         },
                     };
-                }
-            }
-            return metricQuery;
+                });
+            });
         });
     }
 
